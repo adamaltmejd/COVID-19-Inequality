@@ -1,0 +1,76 @@
+All;C19 positive;2020;0.0439897
+All;C19 hospital;2020;0.0030778
+All;C19 death;2020;0.0010177
+All;Death;2016;0.0092124
+All;Death;2017;0.0091817
+All;Death;2018;0.0090943
+All;Death;2019;0.008656
+All;Death;2020;0.0094809
+All;Antidepressants;2016;0.0227407
+All;Antidepressants;2017;0.0226769
+All;Antidepressants;2018;0.0230427
+All;Antidepressants;2019;0.023609
+All;Antidepressants;2020;0.022982
+All;Sedatives;2016;0.0354518
+All;Sedatives;2017;0.0349288
+All;Sedatives;2018;0.0339279
+All;Sedatives;2019;0.0332701
+All;Sedatives;2020;0.0330689
+All;Cancer diagnosis;2016;0.0087734
+All;Cancer diagnosis;2017;0.0093067
+All;Cancer diagnosis;2018;0.0094536
+All;Cancer diagnosis;2019;0.009747
+All;Cancer diagnosis;2020;0.0087639
+All;Surgery;2016;0.1432589
+All;Surgery;2017;0.1456457
+All;Surgery;2018;0.1452762
+All;Surgery;2019;0.1471735
+All;Surgery;2020;0.1359167
+All;Unemployment;2016;0.0332312
+All;Unemployment;2017;0.0320331
+All;Unemployment;2018;0.0320128
+All;Unemployment;2019;0.0337322
+All;Unemployment;2020;0.0475919
+All;Income loss;2016;0.201527
+All;Income loss;2017;0.1846111
+All;Income loss;2018;0.1800693
+All;Income loss;2019;0.1853881
+All;Income loss;2020;0.2047773
+Ages 25-64;C19 positive;2020;0.05768
+Ages 25-64;C19 hospital;2020;0.0025702
+Ages 25-64;C19 death;2020;0.0001136
+Ages 25-64;Death;2016;0.0020904
+Ages 25-64;Death;2017;0.0020299
+Ages 25-64;Death;2018;0.0019839
+Ages 25-64;Death;2019;0.0018643
+Ages 25-64;Death;2020;0.0019132
+Ages 25-64;Antidepressants;2016;0.0261503
+Ages 25-64;Antidepressants;2017;0.0256852
+Ages 25-64;Antidepressants;2018;0.0258078
+Ages 25-64;Antidepressants;2019;0.0263332
+Ages 25-64;Antidepressants;2020;0.0257842
+Ages 25-64;Sedatives;2016;0.0381704
+Ages 25-64;Sedatives;2017;0.0375172
+Ages 25-64;Sedatives;2018;0.0363521
+Ages 25-64;Sedatives;2019;0.0355838
+Ages 25-64;Sedatives;2020;0.0351866
+Ages 25-64;Cancer diagnosis;2016;0.0059528
+Ages 25-64;Cancer diagnosis;2017;0.0066915
+Ages 25-64;Cancer diagnosis;2018;0.0065875
+Ages 25-64;Cancer diagnosis;2019;0.0068918
+Ages 25-64;Cancer diagnosis;2020;0.0062101
+Ages 25-64;Surgery;2016;0.1347817
+Ages 25-64;Surgery;2017;0.1374508
+Ages 25-64;Surgery;2018;0.1361832
+Ages 25-64;Surgery;2019;0.1377358
+Ages 25-64;Surgery;2020;0.1296725
+Ages 25-64;Unemployment;2016;0.0443453
+Ages 25-64;Unemployment;2017;0.0442852
+Ages 25-64;Unemployment;2018;0.0447925
+Ages 25-64;Unemployment;2019;0.0477803
+Ages 25-64;Unemployment;2020;0.0663764
+Ages 25-64;Income loss;2016;0.2158404
+Ages 25-64;Income loss;2017;0.1986849
+Ages 25-64;Income loss;2018;0.1950047
+Ages 25-64;Income loss;2019;0.1971534
+Ages 25-64;Income loss;2020;0.2157056

@@ -1,20 +1,20 @@
-RR_change <- function(.dt, group) {
-    if (.dt[, any(grepl("2019", var))]) {
-        group_change <- .dt[grep(paste0("2020.*", group), var), coef] / .dt[grep(paste0("2019.*", group), var), coef]
-        base_change <- .dt[grep("2020\\.ar$", var), coef] / .dt[grep("2019bn\\.ar$", var), coef]
-        return(group_change / base_change)
-    } else {
-        return(.dt[grep(group, var), coef] / .dt[grep("_cons", var), coef])
-    }
-}
+# RR_change <- function(.dt, group) {
+#     if (.dt[, any(grepl("2019", var))]) {
+#         group_change <- .dt[grep(paste0("2020.*", group), var), coef] / .dt[grep(paste0("2019.*", group), var), coef]
+#         base_change <- .dt[grep("2020\\.year$", var), coef] / .dt[grep("2019bn\\.year$", var), coef]
+#         return(group_change / base_change)
+#     } else {
+#         return(.dt[grep(group, var), coef] / .dt[grep("_cons", var), coef])
+#     }
+# }
 
-RR_level <- function(.dt, group, year, ar_2020 = FALSE) {
-    if (ar_2020 == TRUE) {
-        if (.dt[, any(grepl("ar_2020", var))]) {
+RR_level <- function(.dt, group, year, year_2020 = FALSE) {
+    if (year_2020 == TRUE) {
+        if (.dt[, any(grepl("year_2020", var))]) {
             if (year == 2019) {
-                return(.dt[grep(paste0(group, "#0bn\\.ar_2020"), var), coef] / .dt[var == "0bn.ar_2020", coef])
+                return(.dt[grep(paste0(group, "#0\\.year_2020"), var), coef] / .dt[var == "0.year_2020", coef])
             } else if (year == 2020) {
-                return(.dt[grep(paste0(group, "#1\\.ar_2020"), var), coef] / .dt[var == "1.ar_2020", coef])
+                return(.dt[grep(paste0(group, "#1\\.year_2020"), var), coef] / .dt[var == "1.year_2020", coef])
             } else { stop("Year needs to be 2019 or 2020.")}
         } else {
             if (year %in% 2016:2019) return(NA_real_)
@@ -22,7 +22,7 @@ RR_level <- function(.dt, group, year, ar_2020 = FALSE) {
         }
     } else {
         if (.dt[, any(grepl("2019", var))]) {
-            return(.dt[grep(paste0(year, ".*", group), var), coef] / .dt[grep(paste0(year, ".*\\.ar$"), var), coef])
+            return(.dt[grep(paste0(year, ".*", group), var), coef] / .dt[grep(paste0(year, ".*\\.year$"), var), coef])
         } else {
             if (year %in% 2016:2019) return(NA_real_)
             else return(.dt[grep(group, var), coef] / .dt[grep("_cons", var), coef])
@@ -32,48 +32,89 @@ RR_level <- function(.dt, group, year, ar_2020 = FALSE) {
 
 RR_base <- function(.dt, year) {
     if (.dt[, any(grepl("2019", var))]) {
-        return(.dt[grep(paste0(year, ".*\\.ar$"), var), unique(coef)])
+        return(.dt[grep(paste0(year, ".*\\.year$"), var), unique(coef)])
     } else {
         if (year == 2019) return(NA_real_)
         else return(.dt[var == "_cons", unique(coef)])
     }
 }
 
-set_labels <- function(out) {
-    out[, outcome_label := factor(outcome,
-        levels = c("positivt_fall", "covid_sjukhus", "covid_dod", "dod", "antidepressiva", "lugnande", "operation", "cancer", "tapp_disp", "tapp_brutto", "arblos"),
-        labels = c("Positive case", "Hospitalization, covid-19", "Death, covid-19", "Death, all causes", "Antidepressants", "Sedatives", "Surgical procedure", "Cancer diagnosis", "Income loss", "Gross income loss", "Unemployment")
-        )]
-    out[, dimension_label := factor(dimension,
-        levels = c("kon", "land", "utbildning", "inkomst"),
-        labels = c("Gender", "Region of birth", "Level of education", "Income quartile"))]
-    out[, group_label := factor(group,
-        levels = c("pop_avg",
-                   "1bn.inkomst", "2.inkomst", "3.inkomst", "4.inkomst", # "0bn.inkomst",
-                   "0bn.utbildning", "1.utbildning", "2.utbildning", "3.utbildning",
-                   "0bn.land", "3.land", "2.land", "1.land",
-                   "1bn.kon", "2.kon"),
-        labels = c("Population average",
-                   "Quartile 1", "Quartile 2", "Quartile 3", "Quartile 4", # "Missing income",
-                   "Missing education", "Compulsory", "Upper secondary", "Post-secondary",
-                   "Missing country of birth", "Outside of Europe", "Europe", "Sweden",
-                   "Men", "Women"))]
-    out[, year := factor(year, levels = c("2016-2019", "2016", "2017", "2018", "2019", "2020"))]
+set_labels <- function(out, radar_order = FALSE, return = FALSE) {
+    if ("outcome" %in% names(out)) {
+        if (radar_order) {
+            out[, outcome_label := factor(
+                outcome,
+                levels = c("covid_pos", "covid_dead", "covid_novacc",
+                           "dead_any_cause", "psych_outp",
+                           "antidepressants", "sedatives", "psych_1177", "psych_death", "psych_hosp",
+                           "surgery", "surg_dead_30d", "cancer", "cancer_dead_365d",
+                           "dispinc_drop", "unemployed", "not_in_emp",
+                           "hosp_inc", "hosp_unemp",
+                           "covid_hosp"),
+                labels = c("Positive, COVID-19", "Death, COVID-19", "Not vaccinated, COVID-19",
+                           "Death, all causes", "Psychiatric care visit",
+                           "New antidepressant use", "New sedative use", "Mental health hotline call", "Suicide", "Psychiatric inpatient care",
+                           "Surgical procedure", "30d perioperative non-survival", "Cancer diagnosis", "1yr cancer non-survival",
+                           "Income loss", "Unemployment", "Not in employment",
+                           "C19 Hospitalization + Disposable income drop", "C19 Hospitalization + Unemployment",
+                           "Hospitalization, COVID-19")
+                )]
+        } else {
+            out[, outcome_label := factor(
+                outcome,
+                levels = c("covid_pos", "covid_hosp", "covid_dead", "covid_novacc",
+                           "dead_any_cause", "psych_outp",
+                           "antidepressants", "sedatives", "psych_1177", "psych_death", "psych_hosp",
+                           "surgery", "surg_dead_30d", "cancer", "cancer_dead_365d",
+                           "dispinc_drop", "unemployed", "not_in_emp",
+                           "hosp_inc", "hosp_unemp"),
+                labels = c("Positive, COVID-19", "Hospitalization, COVID-19", "Death, COVID-19", "Not vaccinated, COVID-19",
+                           "Death, all causes", "Psychiatric care visit",
+                           "New antidepressant use", "New sedative use", "Mental health hotline call", "Suicide", "Psychiatric inpatient care",
+                           "Surgical procedure", "30d perioperative non-survival", "Cancer diagnosis", "1yr cancer non-survival",
+                           "Income loss", "Unemployment", "Not in employment",
+                           "C19 Hospitalization + Disposable income drop", "C19 Hospitalization + Unemployment")
+                )]
+        }
+
+        if (return) return(out)
+    }
+    if ("dimension" %in% names(out)) {
+        out[, dimension_label := factor(dimension,
+            levels = c("male", "country", "education", "income_qt"),
+            labels = c("Gender", "Region of birth", "Level of education", "Income quartile"))]
+    }
+    if ("group" %in% names(out)) {
+        out[, group_label := factor(group,
+            levels = c("pop_avg",
+                    "1.income_qt", "2.income_qt", "3.income_qt", "4.income_qt", # "0bn.income_qt",
+                    "0.education", "1.education", "2.education", "3.education",
+                    "0.country", "3.country", "2.country", "1.country",
+                    "1.male", "0.male"),
+            labels = c("Population average",
+                    "Quartile 1", "Quartile 2", "Quartile 3", "Quartile 4", # "Missing income",
+                    "Missing education", "Compulsory", "Upper secondary", "Post-secondary",
+                    "Missing country of birth", "Outside of Europe", "Europe", "Sweden",
+                    "Men", "Women"))]
+    }
+    if ("year" %in% names(out)) {
+        out[, year := factor(year, levels = c("2016-2019", "2016", "2017", "2018", "2019", "2020", "2021"))]
+    }
 
     # Swedish
     # out[, outcome_label := factor(outcome,
-    #     levels = c("positivt_fall", "covid_sjukhus", "covid_dod", "dod", "antidepressiva", "lugnande", "operation", "cancer", "tapp_disp", "tapp_brutto", "arblos"),
-    #     labels = c("Positivt fall", "Sjukhusinläggning, covid-19", "Dödsfall, covid-19", "Dödsfall, alla orsaker", "Antidepressiva", "Lugnande", "Operation", "Cancerdiagnos", "Inkomstförlust", "Inkomstförlust, brutto", "Arbetslöshet")
+    #     levels = c("covid_pos", "covid_hosp", "covid_dead", "dead_any_cause", "antidepressants", "lugnande", "surgery", "cancer", "dispinc_drop", "tapp_brutto", "unemployed"),
+    #     labels = c("Positivt fall", "Sjukhusinläggning, covid-19", "Dödsfall, covid-19", "Dödsfall, alla orsaker", "antidepressants", "Lugnande", "surgery", "Cancerdiagnos", "Inkomstförlust", "Inkomstförlust, brutto", "Arbetslöshet")
     #     )]
     # out[, dimension_label := factor(dimension,
     #     levels = c("inkomst", "utbildning", "land", "kon"),
     #     labels = c("Inkomst", "Utbildning", "Födelseland", "Kön"))]
     # out[, group_label := factor(group,
     #     levels = c("pop_avg",
-    #                "1bn.inkomst", "2.inkomst", "3.inkomst", "4.inkomst", # "0bn.inkomst",
-    #                "0bn.utbildning", "1.utbildning", "2.utbildning", "3.utbildning",
-    #                "0bn.land", "3.land", "2.land", "1.land",
-    #                "1bn.kon", "2.kon"),
+    #                "1bn.income_qt", "2.income_qt", "3.income_qt", "4.income_qt", # "0bn.income_qt",
+    #                "0bn.education", "1.education", "2.education", "3.education",
+    #                "0bn.country", "3.country", "2.country", "1.country",
+    #                "1bn.male", "2.male"),
     #     labels = c("Populationsgenomsnitt",
     #                "Kvartil 1", "Kvartil 2", "Kvartil 3", "Kvartil 4", # "Missing income",
     #                "Utbildningsnivå saknas", "Förgymnasial", "Gymnasial", "Eftergymnasial",
@@ -102,100 +143,76 @@ create_base_levels <- function(margins_data) {
     return(out)
 }
 
-create_plotdata <- function(margins_data, est_type, change = FALSE) {
+create_plotdata <- function(margins_data, est_type = "manymodels", radar_order = FALSE) {
     library(data.table)
-    if (est_type == "mixed") {
-        .dt <- margins_data[(est == "full_population" & !(y %in% c("arblos", "tapp_disp"))) | (est == "working_age" & y %in% c("arblos", "tapp_disp"))]
-    } else if (est_type == "onemodel_mixed") {
-        .dt <- margins_data[(est == "onemodel_full_population" & !(y %in% c("arblos", "tapp_disp"))) | (est == "onemodel_working_age" & y %in% c("arblos", "tapp_disp"))]
-    } else {
-        .dt <- margins_data[est == est_type]
-    }
+
+    .dt <- margins_data[est == est_type]
+
     outcomes <- .dt[, unique(y)]
     dimensions <- .dt[, unique(x)]
-    years <- .dt[, sort(unique(na.omit(as.integer(gsub("^([0-9]{4})?.+$", "\\1", var)))))]
+    #years <- .dt[, sort(unique(na.omit(as.integer(gsub("^([0-9]{4})?.+$", "\\1", var)))))]
 
     out <- data.table()
     for (dimension in dimensions) {
         for (outcome in outcomes) {
-            if (length(years) > 0) {
-                groups <- .dt[y == outcome & x == dimension &
-                                     grepl("\\.", var) & !grepl("\\.ar$", var),
-                                     unique(gsub("(20[012][0-9](bn)?\\.ar#)", "", var))]
-            } else {
-                groups <- .dt[y == outcome & x == dimension & grepl("\\.", var) & !grepl("\\.ar_2020$", var), unique(var)]
-            }
+            # if (length(years) > 0) {
+            #     groups <- .dt[y == outcome & x == dimension &
+            #                          grepl("\\.", var) & !grepl("\\.year$", var),
+            #                          unique(gsub("(20[012][0-9](bn)?\\.year#)", "", var))]
+            # } else {
+            #     groups <- .dt[y == outcome & x == dimension & grepl("\\.", var) & !grepl("\\.year_2020$", var), unique(var)]
+            # }
+
+            groups <- .dt[y == outcome & x == dimension & grepl("\\.", var) & !grepl("\\.year_2020$", var), unique(var)]
 
             for (group in groups) {
-
-                # if (change) {
-                #     out <- rbind(
-                #         out,
-                #         data.table(outcome = outcome, dimension = dimension, group = group, year = 2020,
-                #                    coef = RR_change(.dt[y == outcome & x == dimension], group))
-                #     )
-                # }
-
-                if (!change) {
-                    if (length(years) == 0) {
-                        out <- rbind(
+                out <- rbind(
                             out,
                             data.table(outcome = outcome, dimension = dimension, group = group, year = "2016-2019",
-                                       coef = RR_level(.dt[y == outcome & x == dimension], group, 2019, ar_2020 = TRUE)),
-                            data.table(outcome = outcome, dimension = dimension, group = group, year = 2020,
-                                       coef = RR_level(.dt[y == outcome & x == dimension], group, "2020", ar_2020 = TRUE))
+                                       coef = RR_level(.dt[y == outcome & x == dimension], group, "2019", year_2020 = TRUE)),
+                            data.table(outcome = outcome, dimension = dimension, group = group, year = "2020",
+                                       coef = RR_level(.dt[y == outcome & x == dimension], group, "2020", year_2020 = TRUE))
                         )
-                    } else {
-                        out <- rbind(
-                            out,
-                            data.table(outcome = outcome, dimension = dimension, group = group, year = 2016,
-                                    coef = RR_level(.dt[y == outcome & x == dimension], group, 2016)),
-                            data.table(outcome = outcome, dimension = dimension, group = group, year = 2017,
-                                    coef = RR_level(.dt[y == outcome & x == dimension], group, 2017)),
-                            data.table(outcome = outcome, dimension = dimension, group = group, year = 2018,
-                                    coef = RR_level(.dt[y == outcome & x == dimension], group, 2018)),
-                            data.table(outcome = outcome, dimension = dimension, group = group, year = 2019,
-                                    coef = RR_level(.dt[y == outcome & x == dimension], group, 2019)),
-                            data.table(outcome = outcome, dimension = dimension, group = group, year = 2020,
-                                    coef = RR_level(.dt[y == outcome & x == dimension], group, 2020))
-                        )
-                    }
-                }
             }
         }
     }
 
-    set_labels(out)
+    set_labels(out, radar_order = radar_order)
 
     return(out)
 }
 
-create_absolute_plotdata <- function(margins_data, est_type) {
-    if (est_type == "mixed") {
-        .dt <- margins_data[(est == "full_population" & !(y %in% c("arblos", "tapp_disp"))) | (est == "working_age" & y %in% c("arblos", "tapp_disp"))]
-    } else if (est_type == "onemodel_mixed") {
-        .dt <- margins_data[(est == "onemodel_full_population" & !(y %in% c("arblos", "tapp_disp"))) | (est == "onemodel_working_age" & y %in% c("arblos", "tapp_disp"))]
-    } else {
-        .dt <- margins_data[est == est_type]
-    }
+create_absolute_plotdata <- function(margins_data, est_type = "manymodels") {
+    .dt <- margins_data[est == est_type]
+
     .dt <- .dt[, .(est, var, coef, y, x, ci_lower, ci_upper)]
 
-    .dt[grep("1.ar_2020", var), year := "2020"]
-    .dt[grep("0bn.ar_2020", var), year := "2016-2019"]
-    .dt[y %in% c("covid_dod", "covid_sjukhus", "positivt_fall"), year := "2020"]
+    .dt[grep("1.year_2020", var), year := "2020"]
+    .dt[grep("0.year_2020", var), year := "2016-2019"]
+
+    #.dt[y %in% c("covid_dead", "covid_hosp", "covid_pos"), year := "2020"]
     .dt <- .dt[!is.na(year)]
 
-    .dt[, group := gsub("#?(0bn|1).ar_2020", "", var)]
+    .dt[, group := gsub("#?(0|1).year_2020", "", var)]
     .dt[group == "" | group == "_cons", group := "pop_avg"]
-    .dt <- .dt[!(group %in% c("0bn.utbildning", "0bn.inkomst", "0bn.land", "0bn.kon"))]
+    .dt <- .dt[!(group %in% c("0.education", "0.country"))]
     setnames(.dt, c("y", "x"), c("outcome", "dimension"))
     set_labels(.dt)
 
     return(.dt)
 }
 
-prepare_radar_data <- function(margins_plotdata, dt_min = 0, dt_max = 2.5, ref = TRUE) {
+prepare_radar_data <- function(margins_plotdata, dt_min = 0, dt_max = 2.5, ref = TRUE, include_outcomes = NULL) {
     library(data.table)
+
+    if (!is.null(include_outcomes)) {
+        extra_rows <- set_labels(data.table(tidyr::crossing(
+            data.table(outcome = include_outcomes)[!(outcome %in% margins_plotdata$outcome)],
+            unique(margins_plotdata[, .(dimension, group, year)])
+        )))
+        extra_rows[, coef := NA_real_]
+        margins_plotdata <- rbind(margins_plotdata, extra_rows)
+    }
 
     if (margins_plotdata[, uniqueN(group), outcome][, unique(V1)] > 1) {
         # If multiple groups in same plot

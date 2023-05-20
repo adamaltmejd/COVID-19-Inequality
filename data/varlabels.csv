@@ -1,47 +1,46 @@
 level,label,drop
-"1b.inkomst","Quartile 1",1
-"1b.inkomst#0b.ar_2020","~~\(\times 2016--2019\)",1
-"1b.inkomst#1o.ar_2020","~~\(\times 2020\)",1
-"2.inkomst","Quartile 2",0
-"2o.inkomst#0b.ar_2020","~~\(\times 2016--2019\)",1
-"2.inkomst#1.ar_2020","~~\(\times 2020\)",0
-"3.inkomst","Quartile 3",0
-"3o.inkomst#0b.ar_2020","~~\(\times 2016--2019\)",1
-"3.inkomst#1.ar_2020","~~\(\times 2020\)",0
-"4.inkomst","Quartile 4",0
-"4o.inkomst#0b.ar_2020","~~\(\times 2016--2019\)",1
-"4.inkomst#1.ar_2020","~~\(\times 2020\)",0
-"0.utbildning","Missing education",1
-"0o.utbildning#0b.ar_2020","~~\(\times 2016--2019\)",1
-"0.utbildning#1.ar_2020","~~\(\times 2020\)",1
-"1b.utbildning","Compulsory",1
-"1b.utbildning#0b.ar_2020","~~\(\times 2016--2019\)",1
-"1b.utbildning#1o.ar_2020","~~\(\times 2020\)",1
-"2.utbildning","Upper secondary",0
-"2o.utbildning#0b.ar_2020","~~\(\times 2016--2019\)",1
-"2.utbildning#1.ar_2020","~~\(\times 2020\)",0
-"3.utbildning","Post-secondary school",0
-"3o.utbildning#0b.ar_2020","~~\(\times 2016--2019\)",1
-"3.utbildning#1.ar_2020","~~\(\times 2020\)",0
-"1b.kon","Men",1
-"1b.kon#0b.ar_2020","~~\(\times 2016--2019\)",1
-"1b.kon#1o.ar_2020","~~\(\times 2020\)",1
-"2.kon","Women",0
-"2o.kon#0b.ar_2020","~~\(\times 2016--2019\)",1
-"2.kon#1.ar_2020","~~\(\times 2020\)",0
-"0.land","Missing country of birth",1
-"0o.land#0b.ar_2020","~~\(\times 2016--2019\)",1
-"0.land#1.ar_2020","~~\(\times 2020\)",1
-"1b.land","Sweden",1
-"1b.land#0b.ar_2020","~~\(\times 2016--2019\)",1
-"1b.land#1o.ar_2020","~~\(\times 2020\)",1
-"2.land","Europe",0
-"2o.land#0b.ar_2020","~~\(\times 2016--2019\)",1
-"2.land#1.ar_2020","~~\(\times 2020\)",0
-"3.land","Outside of Europe",0
-"3o.land#0b.ar_2020","~~\(\times 2016--2019\)",1
-"3.land#1.ar_2020","~~\(\times 2020\)",0
-"0b.ar_2020","\(2016--2019\)",1
-"1.ar_2020","\(2020\)",0
-"_cons","Constant",0
-
+1.income_qt,Quartile 1,1
+1.income_qt#0.year_2020,~~\(\times 2016--2019\),1
+1.income_qt#1.year_2020,~~\(\times 2020\),1
+2.income_qt,Quartile 2,0
+2.income_qt#0.year_2020,~~\(\times 2016--2019\),1
+2.income_qt#1.year_2020,~~\(\times 2020\),0
+3.income_qt,Quartile 3,0
+3.income_qt#0.year_2020,~~\(\times 2016--2019\),1
+3.income_qt#1.year_2020,~~\(\times 2020\),0
+4.income_qt,Quartile 4,0
+4.income_qt#0.year_2020,~~\(\times 2016--2019\),1
+4.income_qt#1.year_2020,~~\(\times 2020\),0
+0.education,Missing education,1
+0.education#0.year_2020,~~\(\times 2016--2019\),1
+0.education#1.year_2020,~~\(\times 2020\),1
+1.education,Compulsory,1
+1.education#0.year_2020,~~\(\times 2016--2019\),1
+1.education#1.year_2020,~~\(\times 2020\),1
+2.education,Upper secondary,0
+2.education#0.year_2020,~~\(\times 2016--2019\),1
+2.education#1.year_2020,~~\(\times 2020\),0
+3.education,Post-secondary school,0
+3.education#0.year_2020,~~\(\times 2016--2019\),1
+3.education#1.year_2020,~~\(\times 2020\),0
+1.male,Men,1
+1.male#0.year_2020,~~\(\times 2016--2019\),1
+1.male#1.year_2020,~~\(\times 2020\),1
+0.male,Women,0
+0.male#0.year_2020,~~\(\times 2016--2019\),1
+0.male#1.year_2020,~~\(\times 2020\),0
+0.country,Missing country of birth,1
+0.country#0.year_2020,~~\(\times 2016--2019\),1
+0.country#1.year_2020,~~\(\times 2020\),1
+1.country,Sweden,1
+1.country#0.year_2020,~~\(\times 2016--2019\),1
+1.country#1.year_2020,~~\(\times 2020\),1
+2.country,Europe,0
+2.country#0.year_2020,~~\(\times 2016--2019\),1
+2.country#1.year_2020,~~\(\times 2020\),0
+3.country,Outside of Europe,0
+3.country#0.year_2020,~~\(\times 2016--2019\),1
+3.country#1.year_2020,~~\(\times 2020\),0
+0.year_2020,\(2016--2019\),1
+1.year_2020,\(2020\),0
+_cons,Constant,0

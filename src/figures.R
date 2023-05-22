@@ -207,7 +207,7 @@ regression_table <- function(regression_results, varlabels, outcome, digits = 3)
     tab <- rbind(tab, stats, use.names = TRUE, fill = TRUE)
 
     setcolorder(tab, c("label", paste0(outcome, c("_income_qt", "_education", "_male", "_country"))))
-    setnames(tab, c("{}", braces(paste0("(", 1:5, ")"))))
+    setnames(tab, c(braces(""), braces(paste0("(", 1:5, ")"))))
 
     datasummary_df(tab,
             output = "latex_tabular",

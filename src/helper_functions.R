@@ -18,12 +18,12 @@ save_table <- function(.table, fn, folder = file.path("out", "tables")) {
     return(fn)
 }
 
-braces <- function(x) {
-    paste0("{", trimws(x), "}")
+braces <- function(x, braces = c("{", "}")) { # braces = c("{", "}")
+    paste0(braces[1], trimws(x), braces[2])
 }
 
-si_num <- function(x) {
-    braces(paste0("\\num{", x, "}"))
+si_num <- function(x, num_command = "\\num") { # num_command = "\\num"
+    braces(paste0(num_command, braces(x)))
 }
 
 escape_tex <- function(x) {
@@ -44,6 +44,7 @@ escape_tex <- function(x) {
 
 stars <- function() {
     c("\\tnote{***}" = 0.001, "\\tnote{**}" = 0.01, "\\tnote{*}" = 0.05, "\\tnote{\\dagger}" = 0.1)
+    #c("***" = 0.001, "**" = 0.01, "*" = 0.05, "†" = 0.1)
 }
 
 get_stars <- function(p) {

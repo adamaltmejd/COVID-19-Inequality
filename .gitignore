@@ -3,7 +3,7 @@
 .DS_Store
 Thumbs.db
 .vscode
-data_old
+data_backup
 
 # R Extra
 *.Rout

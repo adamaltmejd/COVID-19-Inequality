@@ -67,7 +67,7 @@ list(
             plot_theme() + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
     ),
     tar_target(out_p_base_levels,
-               saveplot(p_base_levels, file.path("out", "base_levels.pdf"), width = 14, height = 14), format = "file"),
+               saveplot(p_base_levels, file.path("out", "base_levels.eps"), width = 14, height = 14), format = "file"),
 
     tar_target(p_base_levels_psych,
         ggplot(data = dt_base_levels[outcome %in% c("antidepressants", "psych_death", "psych_outp") & !is.na(value) & value != 0] |> # "psych_1177", "psych_outp", "sedatives"
@@ -95,7 +95,7 @@ list(
             plot_theme() + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
     ),
     tar_target(out_p_base_levels_psych,
-               saveplot(p_base_levels_psych, file.path("out", "base_levels_psych.pdf"), width = 14, height = 7), format = "file"),
+               saveplot(p_base_levels_psych, file.path("out", "base_levels_psych.eps"), width = 14, height = 7), format = "file"),
 
     # Radar plots
     tar_target(f_margins_data, file.path("data", "margins_results.csv"), format = "file"),
@@ -114,7 +114,7 @@ list(
                    pattern = map(dimensions), iteration = "list"),
         tar_target(p_radar,
                    plot_radar(dt_radar,
-                              fn = file.path("out", "all_groups", paste0("", dimensions$dimension, "_2020_", est_type, ".pdf")),
+                              fn = file.path("out", "all_groups", paste0("", dimensions$dimension, "_2020_", est_type, ".eps")),
                               groups = groups[dimension == dimensions$dimension, group],
                               #title = dimensions$dimension_label,
                               draw_legend = TRUE),
@@ -125,7 +125,7 @@ list(
                    pattern = map(dimensions), iteration = "list"),
         tar_target(p_radar_2016,
                    plot_radar(dt_radar_2016,
-                              fn = file.path("out", "all_groups", paste0("", dimensions$dimension, "_2016_2019_", est_type, ".pdf")),
+                              fn = file.path("out", "all_groups", paste0("", dimensions$dimension, "_2016_2019_", est_type, ".eps")),
                               groups = groups[dimension == dimensions$dimension, group],
                               draw_legend = TRUE),
                    pattern = map(dimensions, dt_radar_2016), format = "file")
@@ -172,14 +172,14 @@ list(
         ggplot(data = dt_scatter[dimension == scatter_groups$dimension],
                #aes(x = year_2016_2019, y = year_2020, color = group_label, shape = outcome_label)) +
                aes(x = year_2016_2019, y = year_2020)) +
-            geom_ribbon(data = data.table(x = seq(0, 2.5, 0.1)),
+            geom_ribbon(data = data.table(x = seq(0, 2.4, 0.1)),
                         aes(x = x, y = x, ymin = x * 0.95, ymax = x * 1.05), fill = "grey60", alpha = 0.5) +
-            geom_ribbon(data = data.table(x = seq(0, 2.5, 0.1)),
+            geom_ribbon(data = data.table(x = seq(0, 2.4, 0.1)),
                         aes(x = x, y = x, ymin = x * 0.90, ymax = x * 1.1), fill = "grey80", alpha = 0.5) +
             geom_abline(intercept = 0, slope = 1, color = "gray60", linewidth = 0.3) +
             geom_point(aes(color = group_label), size = 1.35, alpha = 0.9) +
-            scale_x_continuous(expand = expansion(0, 0)) +
-            scale_y_continuous(expand = expansion(0, 0)) +
+            scale_x_continuous(expand = expansion(0, 0), limits = c(0, 2.3), breaks = seq(0, 2, 0.5), oob = scales::squish) +
+            scale_y_continuous(expand = expansion(0, 0), limits = c(0, 2.3), breaks = seq(0, 2, 0.5), oob = scales::squish) +
             coord_fixed() +
             labs(y = "2020", x = "2016-2019 average") +
             scale_color_discrete(type = reds()[1:uniqueN(dt_scatter[dimension == scatter_groups$dimension]$group_label)]) +
@@ -195,14 +195,14 @@ list(
                   legend.position = "bottom"),
         pattern = map(scatter_groups), iteration = "list"
     ),
-    #tar_target(out_scatter_by_group, saveplot(p_scatter_by_group, tolower(paste0("out/2020_vs_2016_2019/scatter_", scatter_groups$dimension, ".pdf")), width = 10, height = 11), pattern = map(p_scatter_by_group, scatter_groups), format = "file"),
+    # tar_target(out_scatter_by_group, saveplot(p_scatter_by_group, tolower(paste0("out/2020_vs_2016_2019/scatter_", scatter_groups$dimension, ".pdf")), width = 10, height = 11), pattern = map(p_scatter_by_group, scatter_groups), format = "file"),
 
     # Create a grid of plots using cowplot and add a shared shape legend
     tar_target(p_scatter_shape_legend, get_legend(ggplot(data = dt_scatter, aes(x = year_2016_2019, y = year_2020, color = group_label, shape = outcome_label)) + geom_point() +
         scale_shape_manual(values = setNames(0:uniqueN(dt_scatter$outcome_label), unique(dt_scatter$outcome_label))) +
         guides(color = "none", shape = guide_legend(title = NULL, nrow = 2)) + plot_theme() + theme(legend.position = "bottom"))),
     tar_target(out_scatter_by_group_joined,
-        save_plot("out/2020_vs_2016_2019/scatter_all.pdf",
+        save_plot("out/2020_vs_2016_2019/scatter_all.eps", device = cairo_ps,
                   plot_grid(plotlist = p_scatter_by_group, align = "hv", axis = "tblr", nrow = 2, ncol = 2),
                 #   plot_grid(plot_grid(plotlist = p_scatter_by_group, align = "hv", axis = "tblr", nrow = 2, ncol = 2),
                 #             p_scatter_shape_legend, ncol = 1, rel_heights = c(0.93, 0.07)),
@@ -238,7 +238,7 @@ list(
                 guides(color = "none", fill = "none") +
                 plot_theme() + theme(axis.text.y = element_text(size = 6), axis.text.x = element_text(size = 6, angle = 7, hjust = 0.5))
             )() |>
-            saveplot(file.path(paste0("out/interactions/", interactions, ".pdf"))),
+            saveplot(file.path(paste0("out/interactions/", interactions, ".eps"))),
             pattern = map(interactions), iteration = "list"),
 
     # Regression tables
@@ -281,7 +281,7 @@ list(
                 plot_theme() + theme(legend.position = "bottom")
             }()
     ),
-    tar_target(out_surgeries, saveplot(p_surgeries, "out/surgeries.pdf"), format = "file"),
+    tar_target(out_surgeries, saveplot(p_surgeries, "out/surgeries.eps"), format = "file"),
 
     tar_target(end, 1)
 )

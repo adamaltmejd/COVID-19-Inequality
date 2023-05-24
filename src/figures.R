@@ -74,6 +74,18 @@ saveplot <- function(p, fn, folder = file.path("out"), width = 11, height = widt
             pointsize = 11,
             ...
         )
+    } else if (tools::file_ext(fn) == "eps") {
+        ggsave(
+            filename = fn,
+            plot = p,
+            device = cairo_ps,
+            width = width,
+            height = height,
+            units = "cm",
+            dpi = 300,
+            pointsize = 11,
+            ...
+        )
     } else { stop("File format not supported.") }
 
     return(fn)
@@ -100,6 +112,9 @@ plot_radar <- function(plotdata, fn, groups = NULL, title = NULL, lines = nrow(p
     } else if (tools::file_ext(fn) == "pdf") {
         cairo_pdf(fn, width = asp_ratio * (height_px / 300),
                   height = height_px / 300, pointsize = 11) # 11 cm = 4.3in
+    } else if (tools::file_ext(fn) == "eps") {
+        cairo_ps(fn, width = asp_ratio * (height_px / 300),
+                 height = height_px / 300, pointsize = 11) # 11 cm = 4.3in
     } else { stop("File type not supported.") }
 
     # Plot options

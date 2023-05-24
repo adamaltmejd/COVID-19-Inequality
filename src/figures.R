@@ -240,7 +240,6 @@ relative_effects_table <- function(.dt_rel, .dt_abs = NULL, include_pop_avg = FA
     }
 
     .dt <- .dt[!(group %in% c("0.education", "0.country"))]
-    .dt[, format(coef, digits = 2, nsmall = 2, trim = TRUE)]
     .dt[, coef := format(round(coef, 2), nsmall = 2, trim = TRUE)]
     .dt[is.na(coef), coef := ""]
     .dt[est_type == "abs", coef := paste0(coef, "\\%")]

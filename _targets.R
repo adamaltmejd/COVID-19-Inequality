@@ -70,12 +70,12 @@ list(
                saveplot(p_base_levels, file.path("out", "base_levels.pdf"), width = 14, height = 14), format = "file"),
 
     tar_target(p_base_levels_psych,
-        ggplot(data = dt_base_levels[outcome %in% c("antidepressants", "psych_1177", "psych_death", "psych_hosp", "psych_outp", "sedatives") & !is.na(value) & value != 0] |>
+        ggplot(data = dt_base_levels[outcome %in% c("antidepressants", "psych_death", "psych_outp") & !is.na(value) & value != 0] |> # "psych_1177", "psych_outp", "sedatives"
             DT(, year_2020 := ifelse(year_int >= 2020, TRUE, FALSE)),
                aes(x = year_int, y = value, color = year_2020)) +
             geom_point(na.rm = TRUE) +
             stat_smooth(
-                data = dt_base_levels[outcome %in% c("antidepressants", "psych_death", "psych_hosp", "psych_outp", "sedatives") & year_int < 2020],
+                data = dt_base_levels[outcome %in% c("antidepressants", "psych_death", "psych_outp") & year_int < 2020],
                 method = "lm", formula = y ~ x, fullrange = TRUE, se = TRUE, alpha = 0, na.rm = TRUE,
                 linetype = "dashed", color = "grey30", linewidth = 0.5) +
             facet_wrap(vars(outcome_label), scales = "free_y") +
@@ -84,8 +84,8 @@ list(
             # Fake point to get unemployment away from limit
             geom_point(data = set_labels(data.table(outcome = "psych_outp", year = 2020), return = TRUE)[, `:=`(year_int = 2020, year_2020 = TRUE, value = 0.033)], alpha = 0) +
             geom_point(data = set_labels(data.table(outcome = "psych_death", year = 2020), return = TRUE)[, `:=`(year_int = 2020, year_2020 = TRUE, value = 0.00015)], alpha = 0) +
-            geom_point(data = set_labels(data.table(outcome = "psych_1177", year = 2020), return = TRUE)[, `:=`(year_int = 2020, year_2020 = TRUE, value = 0.002)], alpha = 0) +
-            geom_point(data = set_labels(data.table(outcome = "psych_1177", year = 2020), return = TRUE)[, `:=`(year_int = 2020, year_2020 = TRUE, value = 0.0027)], alpha = 0) +
+            #geom_point(data = set_labels(data.table(outcome = "psych_1177", year = 2020), return = TRUE)[, `:=`(year_int = 2020, year_2020 = TRUE, value = 0.002)], alpha = 0) +
+            #geom_point(data = set_labels(data.table(outcome = "psych_1177", year = 2020), return = TRUE)[, `:=`(year_int = 2020, year_2020 = TRUE, value = 0.0027)], alpha = 0) +
             scale_y_continuous(
                 # Y axis limits should never be below zero
                 #limits = function(x) c(max(0, x[1], na.rm = TRUE), x[2]),
@@ -95,7 +95,7 @@ list(
             plot_theme() + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
     ),
     tar_target(out_p_base_levels_psych,
-               saveplot(p_base_levels_psych, file.path("out", "base_levels_psych.pdf"), width = 14, height = 14), format = "file"),
+               saveplot(p_base_levels_psych, file.path("out", "base_levels_psych.pdf"), width = 14, height = 7), format = "file"),
 
     # Radar plots
     tar_target(f_margins_data, file.path("data", "margins_results.csv"), format = "file"),

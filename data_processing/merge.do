@@ -37,23 +37,23 @@ keep if population == 1
 
 // Covid outcomes are only defined for years 2020 and 2021.
 merge 1:1 id year using "data\temp\outcome_covid_positive.dta"
-replace covid_pos = 0 if missing(covid_pos) & inlist(year, 2020, 2021)
-replace covid_pos = . if year == 2021 // Covid test data only available until March 2021
+replace covid_pos = 0 if missing(covid_pos) & inlist(year, 2020, 2021, 2022)
+replace covid_pos = . if year >= 2021  // Covid test data only available until March 2021
 drop _merge
 keep if population == 1
 
 merge 1:1 id year using "data\temp\outcome_covid_hospitalized.dta"
-replace covid_hosp = 0 if missing(covid_hosp) & inlist(year, 2020, 2021)
+replace covid_hosp = 0 if missing(covid_hosp) & inlist(year, 2020, 2021, 2022)
 drop _merge
 keep if population == 1
 
 merge 1:1 id year using "data\temp\outcome_covid_dead.dta"
-replace covid_dead = 0 if missing(covid_dead) & inlist(year, 2020, 2021)
+replace covid_dead = 0 if missing(covid_dead) & inlist(year, 2020, 2021, 2022)
 drop _merge
 keep if population == 1
 
 merge 1:1 id year using "data\temp\outcome_covid_vaccinated.dta"
-replace covid_vaccinated = 0 if missing(covid_vaccinated) & year == 2021 // Vaccinations started in 2021
+replace covid_vaccinated = 0 if missing(covid_vaccinated) & year >= 2020 // Vaccinations started in late december 2020
 generate covid_novacc = 1 - covid_vaccinated
 drop _merge
 keep if population == 1
@@ -76,7 +76,7 @@ keep if population == 1
 
 merge 1:1 id year using "data\temp\outcome_psych_1177.dta"
 replace psych_1177 = 0 if missing(psych_1177)
-replace psych_1177 = . if year == 2021 // Full 2021 not available
+replace psych_1177 = . if year < 2019 | year >= 2021 // Full 2021 not available
 drop _merge
 keep if population == 1
 
@@ -103,13 +103,13 @@ keep if population == 1
 merge 1:1 id year using "data\temp\outcome_disposable_income.dta"
 replace dispinc_drop = 0 if missing(dispinc_drop)
 replace dispinc_drop = . if work_age == 0 // Only defined for working age population
+replace dispinc_drop = . if year == 2022 // No disposable income data for 2022
 drop _merge
 keep if population == 1
 
 merge 1:1 id year using "data\temp\outcome_unemployment.dta"
 replace unemployed = 0 if missing(unemployed)
 replace unemployed = . if work_age == 0 // Only defined for workig age population
-replace unemployed = . if year > 2020 // Unemployment spell data not available for 2021
 drop _merge
 keep if population == 1
 
@@ -119,13 +119,21 @@ replace not_in_emp = 0 if employed == 1 & work_age == 1
 
 merge 1:1 id year using "data\temp\outcome_cancer.dta"
 replace cancer = 0 if missing(cancer)
-replace cancer = . if year == 2021 // Cancer data not available for 2021
+replace cancer = . if year == 2022 // cancer data not available for 2022
 drop _merge
 keep if population == 1
 
 // Create indicator for if the year is 2020-
-gen year_2020 = 0
+generate year_2020 = 0
 replace year_2020 = 1 if year >= 2020
+
+// 3-level indicator for including 2021 as a separate year of observations
+generate year_group = 0
+replace year_group = 1 if year == 2020
+replace year_group = 2 if year == 2021
+replace year_group = 3 if year == 2022
+label define year_group 0 "2016-2019" 1 "2020" 2 "2021" 3 "2022"
+label values year_group year_group
 
 // Encode region identifiers
 encode region, generate(region_e)
@@ -143,4 +151,5 @@ generate cdead_hosp = covid_dead * covid_hosp
 // Unique identifiers to save e(sample)
 gen long uid = _n
 
+compress
 save "data\data.dta", replace

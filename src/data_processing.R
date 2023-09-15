@@ -8,24 +8,23 @@
 #     }
 # }
 
-RR_level <- function(.dt, group, year, year_2020 = FALSE) {
-    if (year_2020 == TRUE) {
-        if (.dt[, any(grepl("year_2020", var))]) {
-            if (year == 2019) {
-                return(.dt[grep(paste0(group, "#0\\.year_2020"), var), coef] / .dt[var == "0.year_2020", coef])
-            } else if (year == 2020) {
-                return(.dt[grep(paste0(group, "#1\\.year_2020"), var), coef] / .dt[var == "1.year_2020", coef])
-            } else { stop("Year needs to be 2019 or 2020.")}
+RR_level <- function(.dt, group, year) {
+    if (.dt[, any(grepl("year_group", var))]) {
+        if (year == "2016-2019") {
+            return(.dt[grep(paste0("0\\.year_group#", group), var), coef] / .dt[var == "0.year_group", coef])
+        } else if (year == "2020") {
+            return(.dt[grep(paste0("1\\.year_group#", group), var), coef] / .dt[var == "1.year_group", coef])
+        } else if (year == "2021") {
+            return(.dt[grep(paste0("2\\.year_group#", group), var), coef] / .dt[var == "2.year_group", coef])
         } else {
-            if (year %in% 2016:2019) return(NA_real_)
-            else return(.dt[grep(group, var), coef] / .dt[grep("_cons", var), coef])
+            stop("Year needs to be 2016-2019, 2021 or 2021.")
         }
     } else {
-        if (.dt[, any(grepl("2019", var))]) {
-            return(.dt[grep(paste0(year, ".*", group), var), coef] / .dt[grep(paste0(year, ".*\\.year$"), var), coef])
+        # year_group is not defined for covid_pos (because data is only available for 2020)
+        if (year %in% c("2016-2019", "2021")) {
+            return(NA_real_)
         } else {
-            if (year %in% 2016:2019) return(NA_real_)
-            else return(.dt[grep(group, var), coef] / .dt[grep("_cons", var), coef])
+            return(.dt[grep(group, var), coef] / .dt[grep("_cons", var), coef])
         }
     }
 }
@@ -40,18 +39,20 @@ RR_base <- function(.dt, year) {
 }
 
 set_labels <- function(out, radar_order = FALSE, return = FALSE) {
+    library(data.table)
+
     if ("outcome" %in% names(out)) {
         if (radar_order) {
             out[, outcome_label := factor(
                 outcome,
-                levels = c("covid_pos", "covid_dead", "covid_novacc",
+                levels = c("covid_pos", "covid_dead", "covid_novacc", "covid_vaccinated",
                            "dead_any_cause", "psych_outp",
                            "antidepressants", "sedatives", "psych_1177", "psych_death", "psych_hosp",
                            "surgery", "surg_dead_30d", "cancer", "cancer_dead_365d",
                            "dispinc_drop", "unemployed", "not_in_emp",
                            "hosp_inc", "hosp_unemp",
                            "covid_hosp"),
-                labels = c("Positive, COVID-19", "Death, COVID-19", "Not vaccinated, COVID-19",
+                labels = c("Positive, COVID-19", "Death, COVID-19", "Not vaccinated, COVID-19", "Vaccinated, COVID-19",
                            "Death, all causes", "Psychiatric care visit",
                            "New antidepressant use", "New sedative use", "Mental health hotline call", "Suicide", "Psychiatric inpatient care",
                            "Surgical procedure", "30d perioperative non-survival", "Cancer diagnosis", "1yr cancer non-survival",
@@ -62,13 +63,13 @@ set_labels <- function(out, radar_order = FALSE, return = FALSE) {
         } else {
             out[, outcome_label := factor(
                 outcome,
-                levels = c("covid_pos", "covid_hosp", "covid_dead", "covid_novacc",
+                levels = c("covid_pos", "covid_hosp", "covid_dead", "covid_novacc", "covid_vaccinated",
                            "dead_any_cause", "psych_outp",
                            "antidepressants", "sedatives", "psych_1177", "psych_death", "psych_hosp",
                            "surgery", "surg_dead_30d", "cancer", "cancer_dead_365d",
                            "dispinc_drop", "unemployed", "not_in_emp",
                            "hosp_inc", "hosp_unemp"),
-                labels = c("Positive, COVID-19", "Hospitalization, COVID-19", "Death, COVID-19", "Not vaccinated, COVID-19",
+                labels = c("Positive, COVID-19", "Hospitalization, COVID-19", "Death, COVID-19", "Not vaccinated, COVID-19", "Vaccinated, COVID-19",
                            "Death, all causes", "Psychiatric care visit",
                            "New antidepressant use", "New sedative use", "Mental health hotline call", "Suicide", "Psychiatric inpatient care",
                            "Surgical procedure", "30d perioperative non-survival", "Cancer diagnosis", "1yr cancer non-survival",
@@ -153,6 +154,7 @@ create_plotdata <- function(margins_data, est_type = "manymodels", radar_order =
     #years <- .dt[, sort(unique(na.omit(as.integer(gsub("^([0-9]{4})?.+$", "\\1", var)))))]
 
     out <- data.table()
+
     for (dimension in dimensions) {
         for (outcome in outcomes) {
             # if (length(years) > 0) {
@@ -160,18 +162,20 @@ create_plotdata <- function(margins_data, est_type = "manymodels", radar_order =
             #                          grepl("\\.", var) & !grepl("\\.year$", var),
             #                          unique(gsub("(20[012][0-9](bn)?\\.year#)", "", var))]
             # } else {
-            #     groups <- .dt[y == outcome & x == dimension & grepl("\\.", var) & !grepl("\\.year_2020$", var), unique(var)]
+            #     groups <- .dt[y == outcome & x == dimension & grepl("\\.", var) & !grepl("\\.year_group$", var), unique(var)]
             # }
 
-            groups <- .dt[y == outcome & x == dimension & grepl("\\.", var) & !grepl("\\.year_2020$", var), unique(var)]
+            groups <- .dt[y == outcome & x == dimension & !grepl("^[0-9]\\.year_group$", var) & var != "_cons", unique(gsub("[0-9]\\.year_group#", "", var))]
 
             for (group in groups) {
                 out <- rbind(
                             out,
                             data.table(outcome = outcome, dimension = dimension, group = group, year = "2016-2019",
-                                       coef = RR_level(.dt[y == outcome & x == dimension], group, "2019", year_2020 = TRUE)),
+                                       coef = RR_level(.dt[y == outcome & x == dimension], group, "2016-2019")),
                             data.table(outcome = outcome, dimension = dimension, group = group, year = "2020",
-                                       coef = RR_level(.dt[y == outcome & x == dimension], group, "2020", year_2020 = TRUE))
+                                       coef = RR_level(.dt[y == outcome & x == dimension], group, "2020")),
+                            data.table(outcome = outcome, dimension = dimension, group = group, year = "2021",
+                                       coef = RR_level(.dt[y == outcome & x == dimension], group, "2021"))
                         )
             }
         }
@@ -179,21 +183,22 @@ create_plotdata <- function(margins_data, est_type = "manymodels", radar_order =
 
     set_labels(out, radar_order = radar_order)
 
-    return(out)
+    return(out[!is.na(coef)])
 }
 
 create_absolute_plotdata <- function(margins_data, est_type = "manymodels") {
     .dt <- margins_data[est == est_type]
 
-    .dt <- .dt[, .(est, var, coef, y, x, ci_lower, ci_upper)]
+    # .dt <- .dt[, .(est, var, coef, y, x, ci_lower, ci_upper)]
 
-    .dt[grep("1.year_2020", var), year := "2020"]
-    .dt[grep("0.year_2020", var), year := "2016-2019"]
+    .dt[grep("0.year_group", var), year := "2016-2019"]
+    .dt[grep("1.year_group", var), year := "2020"]
+    .dt[grep("2.year_group", var), year := "2021"]
 
-    #.dt[y %in% c("covid_dead", "covid_hosp", "covid_pos"), year := "2020"]
+    .dt[y %in% c("covid_pos"), year := "2020"]
     .dt <- .dt[!is.na(year)]
 
-    .dt[, group := gsub("#?(0|1).year_2020", "", var)]
+    .dt[, group := gsub("#?(0|1|2).year_group#?", "", var)]
     .dt[group == "" | group == "_cons", group := "pop_avg"]
     .dt <- .dt[!(group %in% c("0.education", "0.country"))]
     setnames(.dt, c("y", "x"), c("outcome", "dimension"))

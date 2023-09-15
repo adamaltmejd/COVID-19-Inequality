@@ -1,33 +1,47 @@
+//-
+// Deaths from any cause
+
 // Deaths 2016-2019
-odbc load, exec("select lopnr as id, DODSDAT, ULORSAK as cause_of_death from SoS_R_DORS_ENGANG")dsn("P1105") clear
+odbc load, exec("select lopnr as id, AR, DODSDAT, ULORSAK as cause_of_death from SoS_R_DORS_ENGANG")dsn("P1105") clear
 tostring DODSDAT, replace
 tempfile dead_2016_2019
 save `dead_2016_2019'
-odbc load, exec("select lopnr as id, DODSDAT, ULORSAK as cause_of_death from SoS_R_DORS_KLEV4")dsn("P1105") clear
+// Deaths 2020
+odbc load, exec("select lopnr as id, AR, DODSDAT, ULORSAK as cause_of_death from SoS_R_DORS_KLEV4 WHERE AR = 2020")dsn("P1105") clear
+tempfile dead_2020
+save `dead_2020'
+// Deaths 2021-2022
+odbc load, exec("select P1105_LopNr_PersonNr as id, AR, DODSDAT, ULORSAK as cause_of_death from SoS_R_DORS_TOT_LEV5 WHERE AR >= 2021")dsn("P1105") clear
+destring id, replace
 append using `dead_2016_2019'
+append using `dead_2020'
+recast long id
 
 gen death_date = date(DODSDAT, "YMD")
 format death_date %td
 gen year = year(death_date)
-keep if year >= 2016
+replace year = AR if missing(year)
+keep if year >= 2016 & year <= 2022 & !missing(year)
 keep id year death_date cause_of_death
 generate dead_any_cause = 1
+
 save "data\temp\outcome_dead_any_cause.dta", replace
 
 // -
 // ANTIDEPRESSANTS
-odbc load, exec("select lopnr as id, ATC, EDATUM from SoS_T_R_LMED_ENGANG WHERE ATC IN ('N06A')")dsn("P1105") clear
-
-tempfile lmed
-save `lmed'
-
-odbc load, exec("select lopnr as id, ATC, EDATUM from SoS_R_LMED_KLEV4 WHERE ATC IN ('N06A')")dsn("P1105") clear
-
-append using `lmed'
+forvalues y=2015/2022 {
+	odbc load, exec("select P1105_LopNr_PersonNr as id, ATC, EDATUM from SoS_R_LMED_TOT_`y'_LEV5 WHERE ATC IN ('N06A')")dsn("P1105") clear
+	tempfile antidep`y'
+	save `antidep`y''.dta, replace
+}
+forvalues y=2015/2021 {
+	append using `antidep`y''.dta
+}
 
 generate year = year(EDATUM)
 drop EDATUM
 keep if year >= 2015
+destring id, replace
 
 generate antidepressants = 1
 
@@ -36,6 +50,7 @@ duplicates drop
 
 // Ensure we only count those who did not use during the year before
 reshape wide antidepressants, i(id) j(year)
+gen new_antidep2022=1 if antidepressants2022==1 & missing(antidepressants2021)
 gen new_antidep2021=1 if antidepressants2021==1 & missing(antidepressants2020)
 gen new_antidep2020=1 if antidepressants2020==1 & missing(antidepressants2019)
 gen new_antidep2019=1 if antidepressants2019==1 & missing(antidepressants2018)
@@ -52,18 +67,20 @@ save "data\temp\outcome_antidepressants.dta", replace
 
 // -
 // New sedative use
-odbc load, exec("select lopnr as id, ATC, EDATUM from SoS_T_R_LMED_ENGANG WHERE ATC IN ('N05B', 'N05C')")dsn("P1105") clear
+forvalues y=2015/2022 {
+	odbc load, exec("select P1105_LopNr_PersonNr as id, ATC, EDATUM from SoS_R_LMED_TOT_`y'_LEV5 WHERE ATC IN ('N05B', 'N05C')")dsn("P1105") clear
+	tempfile sed`y'
+	save `sed`y''.dta, replace
 
-tempfile lmed_s
-save `lmed_s'
-
-odbc load, exec("select lopnr as id, ATC, EDATUM from SoS_R_LMED_KLEV4 WHERE ATC IN ('N05B', 'N05C')")dsn("P1105") clear
-
-append using `lmed_s'
+}
+forvalues y=2015/2021 {
+	append using `sed`y''.dta
+}
 
 generate year = year(EDATUM)
 drop EDATUM
 keep if year >= 2015
+destring id, replace
 
 generate sedatives = 1
 keep id year sedatives
@@ -71,6 +88,7 @@ duplicates drop
 
 // Ensure we only count those who did not use during the year before
 reshape wide sedatives, i(id) j(year)
+gen new_sed2022=1 if sedatives2022==1 & missing(sedatives2021)
 gen new_sed2021=1 if sedatives2021==1 & missing(sedatives2020)
 gen new_sed2020=1 if sedatives2020==1 & missing(sedatives2019)
 gen new_sed2019=1 if sedatives2019==1 & missing(sedatives2018)
@@ -92,9 +110,9 @@ odbc load, exec("SELECT p1105_lopnr_personnr AS id, contactreason, documentcreat
 * Include: Confusion, Worry, Sadness, Sleeping difficulties
 keep if (strpos(contactreason,"rvirring")==3|strpos(contactreason,"Oro")==1|strpos(contactreason,"Nedst")==1|strpos(contactreason,"mnbesv")==3)
 
+recast long id
 gen year=substr(documentcreatedtime, 1,4)
 destring year, replace
-drop if year==2021 // We only have full-year data for 2019 and 2020
 keep id year
 duplicates drop 
 gen psych_1177 = 1
@@ -102,19 +120,22 @@ save "data\temp\outcome_psych_1177.dta", replace
 
 // -
 // Visits to open care psychiatry
-odbc load, exec("SELECT DISTINCT lopnr AS id, AR AS year FROM SoS_TTTT_R_PAR_OV_ENGANG WHERE MVO > 900 AND MVO != 999 UNION ALL SELECT DISTINCT lopnr AS id, AR AS year FROM SoS_R_PAR_OV_KLEV4 WHERE MVO > 900 AND MVO != 999")dsn("P1105") clear
+odbc load, exec("SELECT DISTINCT lopnr AS id, AR AS year FROM SoS_TTTT_R_PAR_OV_ENGANG WHERE MVO > 900 AND MVO != 999 UNION ALL SELECT DISTINCT lopnr AS id, AR AS year FROM SoS_R_PAR_OV_KLEV4 WHERE AR = 2020 AND MVO > 900 AND MVO != 999 UNION ALL SELECT DISTINCT P1105_LopNr_PersonNr as id, AR AS year FROM SoS_R_PAR_OV_TOT_LEV5 WHERE AR >= 2021 AND MVO > 900 AND MVO != 999")dsn("P1105") clear
+recast long id
 generate psych_outp = 1
 save "data\temp\outcome_psych_outp.dta", replace
 
 // -
 // Hospitalizations for common psychiatric disorders.
-odbc load, exec("SELECT DISTINCT lopnr AS id, AR AS year FROM SoS_TTTT_R_PAR_SV_ENGANG WHERE hdia LIKE 'F1%' OR hdia LIKE 'F2%' OR hdia LIKE 'F3%' OR hdia LIKE 'F6%' UNION ALL SELECT DISTINCT lopnr AS id, AR AS year FROM SoS_R_PAR_SV_KLEV4 WHERE hdia LIKE 'F1%' OR hdia LIKE 'F2%' OR hdia LIKE 'F3%' OR hdia LIKE 'F6%'")dsn("P1105") clear
+odbc load, exec("SELECT DISTINCT lopnr AS id, AR AS year FROM SoS_TTTT_R_PAR_SV_ENGANG WHERE hdia LIKE 'F1%' OR hdia LIKE 'F2%' OR hdia LIKE 'F3%' OR hdia LIKE 'F6%' UNION ALL SELECT DISTINCT lopnr AS id, AR AS year FROM SoS_R_PAR_SV_KLEV4 WHERE AR = 2020 AND (hdia LIKE 'F1%' OR hdia LIKE 'F2%' OR hdia LIKE 'F3%' OR hdia LIKE 'F6%') UNION ALL SELECT DISTINCT P1105_LopNr_PersonNr AS id, AR AS year FROM SoS_R_PAR_SV_TOT_LEV5 WHERE AR >= 2021 AND (hdia LIKE 'F1%' OR hdia LIKE 'F2%' OR hdia LIKE 'F3%' OR hdia LIKE 'F6%')")dsn("P1105") clear
+recast long id
 generate psych_hosp = 1 
 save "data\temp\outcome_psych_hosp.dta", replace
 
 // -
 // Suicides or deaths from injury or poisoning with unclear intent
-odbc load, exec("SELECT lopnr as id, AR as year from SoS_R_DORS_ENGANG WHERE ULORSAK LIKE 'Y1%' OR ULORSAK LIKE 'Y2%' OR ULORSAK LIKE 'X6%' OR ULORSAK LIKE 'X7%' OR ULORSAK IN ('Y30','Y31','Y32','Y33','Y34','X80','X81','X82','X83','X84') UNION ALL SELECT lopnr as id, AR as year from SoS_R_DORS_KLEV4 WHERE ULORSAK LIKE 'Y1%' OR ULORSAK LIKE 'Y2%' OR ULORSAK LIKE 'X6%' OR ULORSAK LIKE 'X7%' OR ULORSAK IN ('Y30','Y31','Y32','Y33','Y34','X80','X81','X82','X83','X84')")dsn("P1105") clear 
+odbc load, exec("SELECT DISTINCT lopnr as id, AR as year from SoS_R_DORS_ENGANG WHERE ULORSAK LIKE 'Y1%' OR ULORSAK LIKE 'Y2%' OR ULORSAK LIKE 'X6%' OR ULORSAK LIKE 'X7%' OR ULORSAK IN ('Y30','Y31','Y32','Y33','Y34','X80','X81','X82','X83','X84') UNION ALL SELECT DISTINCT lopnr as id, AR as year from SoS_R_DORS_KLEV4 WHERE AR = 2020 AND (ULORSAK LIKE 'Y1%' OR ULORSAK LIKE 'Y2%' OR ULORSAK LIKE 'X6%' OR ULORSAK LIKE 'X7%' OR ULORSAK IN ('Y30','Y31','Y32','Y33','Y34','X80','X81','X82','X83','X84')) UNION ALL SELECT DISTINCT P1105_LopNr_PersonNr as id, AR as year from SoS_R_DORS_TOT_LEV5 WHERE AR >= 2021 AND (ULORSAK LIKE 'Y1%' OR ULORSAK LIKE 'Y2%' OR ULORSAK LIKE 'X6%' OR ULORSAK LIKE 'X7%' OR ULORSAK IN ('Y30','Y31','Y32','Y33','Y34','X80','X81','X82','X83','X84'))")dsn("P1105") clear 
+recast long id
 generate psych_death = 1
 save "data\temp\outcome_psych_death.dta", replace
 
@@ -122,57 +143,81 @@ save "data\temp\outcome_psych_death.dta", replace
 // Surgeries
 
 // In-patient care
-odbc load, exec("select * from SoS_R_PAR_SV_KLEV4")dsn("P1105") clear
-keep kva_typ* op* OPD* INDATUMA lopnr
-tempfile sv
-save `sv'
-odbc load, exec("select * from SoS_TTTT_R_PAR_SV_ENGANG")dsn("P1105") clear
-keep kva_typ* op* OPD* INDATUMA lopnr
-tostring INDATUMA, replace
-append using `sv'
-
+odbc load, exec("SELECT * FROM SoS_TTTT_R_PAR_SV_ENGANG")dsn("P1105") clear
 rename lopnr id
+recast long id
+tostring INDATUMA, replace
+keep kva_typ* op* OPD* INDATUMA id
+tempfile sv1
+save `sv1'
+odbc load, exec("SELECT * FROM SoS_R_PAR_SV_KLEV4 WHERE AR = 2020")dsn("P1105") clear
+rename lopnr id
+recast long id
+keep kva_typ* op* OPD* INDATUMA id
+tempfile sv2
+save `sv2'
+odbc load, exec("SELECT * FROM SoS_R_PAR_SV_TOT_LEV5 WHERE AR >= 2021")dsn("P1105") clear
+rename P1105_LopNr_PersonNr id
+destring id, replace
+keep kva_typ* op* OPD* INDATUMA id
+append using `sv1'
+append using `sv2'
+
+// Keep only surgeries
 gen n=_n
 reshape long kva_typ op OPD, i(n)
-keep if kva_typ=="K" // Keep only surgeries
+// Encoding issue with KVÅ 2021- (called KMÅ or KKÅ instead of M/K)
+keep if kva_typ=="K" | substr(kva_typ, 1, 2) == "KK" 
 
 rename OPD surgery_date
 generate year=year(surgery_date)
-keep if year >= 2016 & year <= 2021
+keep if year >= 2016 & year <= 2022
 
 keep id year surgery_date
 duplicates drop
 
-save `sv', replace
+tempfile surg
+save `surg'
 
 // Outpatient care
-odbc load, exec("select * from SoS_R_PAR_OV_KLEV4")dsn("P1105") clear
+odbc load, exec("SELECT TOP 10000 * FROM SoS_TTTT_R_PAR_OV_ENGANG")dsn("P1105") clear
 keep kva_typ* AR lopnr INDATUMA
-tempfile ov
-save `ov'
-
-odbc load, exec("select * from SoS_TTTT_R_PAR_OV_ENGANG")dsn("P1105") clear
-keep kva_typ* AR lopnr INDATUMA
+rename lopnr id
+recast long id
 tostring INDATUMA, replace
-append using `ov'
+tempfile ov1
+save `ov1'
+odbc load, exec("SELECT TOP 10000 * FROM SoS_R_PAR_OV_KLEV4 WHERE AR = 2020")dsn("P1105") clear
+keep kva_typ* AR lopnr INDATUMA
+rename lopnr id
+recast long id
+tempfile ov2
+save `ov2'
+odbc load, exec("SELECT TOP 10000 * FROM SoS_R_PAR_OV_TOT_LEV5 WHERE AR >= 2021")dsn("P1105") clear
+keep kva_typ* AR P1105_LopNr_PersonNr INDATUMA
+rename P1105_LopNr_PersonNr id
+destring id, replace
+append using `ov1'
+append using `ov2'
 
-rename (lopnr AR) (id year)
-keep if year >= 2016 & year <= 2021
+rename AR year
+keep if year >= 2016 & year <= 2022
 
 generate surgery_date = date(INDATUMA, "YMD")
 format surgery_date %td
 drop INDATUMA
 
+// Keep only surgeries
 generate double n=_n
 reshape long kva_typ, i(n)
-keep if kva_typ=="K" // Keep only surgeries
+// Encoding issue with KVÅ 2021- (called KMÅ or KKÅ instead of M/K)
+keep if kva_typ=="K" | substr(kva_typ, 1, 2) == "KK" 
 
 keep id year surgery_date
 
-append using `sv'
+append using `surg'
 generate surgery = 1
 
-//duplicates drop id year, force // keep multiple surgeries for now to calculate survival matched to each surgery
 save "data\temp\outcome_surgeries.dta", replace
 
 // Surgery survival rate (non-covid deaths)
@@ -192,6 +237,8 @@ replace surg_dead_30d = 1 if survived_days <= 30 & !missing(survived_days)
 replace surg_dead_30d = . if died_from_covid == 1 // Set COVID deaths to missing
 
 collapse (max) surg_dead_30d, by(id year surgery)
+replace surg_dead_30d = . if year >= 2022
+keep if year >= 2016 & year <= 2022
 save "data\temp\outcome_surgeries.dta", replace
 
 // -
@@ -229,59 +276,60 @@ save "data\temp\outcome_disposable_income.dta", replace
 
 //-
 // UNEMPLOYMENT
-
-// Arbetsförmedlingen data is not available for 2021
 odbc load, exec("select P1105_LopNr_PersonNr as id, INTR_DAT from AMS_INSPER")dsn("P1105") clear
 generate year = year(INTR_DAT)
-keep if year > 2015
+keep if year > 2015 & year <= 2020
+drop if missing(id)
+tempfile unemp
+save `unemp'
+
+odbc load, exec("select P1105_LopNr_PersonNr as id, INTR_DAT from AMS_INSPER_2021_20230726")dsn("P1105") clear
+drop if missing(id)
+generate year = year(INTR_DAT)
+keep if year > 2020
+append using `unemp'
+
+recast long id
 keep id year
 duplicates drop
-/*
-// LISA Data for unemployment can't identify start of spells. Difficult to classify _new_ unemployment. (but results are similar)
-forval i=2015/2021 {
-	odbc load, exec("select P1105_LopNr_PersonNr as id, ALKod as unemp_code from Individ_`i'")dsn("P1105") clear
-	generate year=`i'
-	destring unemp_code, replace
-	keep if unemp_code > 0 & !missing(unemp_code)
-	drop unemp_code
-	tempfile unemp`i'
-	save `unemp`i''
-}
-forval i=2015/2020 {
-	append using `unemp`i''
-}
-duplicates drop id year, force
-*/
+
 generate unemployed = 1
 save "data\temp\outcome_unemployment.dta", replace
 
 //-
 // CANCER
-// Cancer data is not available for 2021
-odbc load, exec("select lopnr as id, AR as year, ICDO10, DIADAT from SoS_T_R_CAN")dsn("P1105") clear
-keep if year>2015
-duplicates drop
+odbc load, exec("SELECT DISTINCT lopnr as id, AR as year, ICDO10, DIADAT from SoS_T_R_CAN WHERE AR >= 2016 AND AR < 2020 UNION ALL SELECT DISTINCT P1105_LopNr_PersonNr as id, AR as year, ICDO10, DIADAT FROM SoS_R_CAN_TOT_LEV5 WHERE AR >= 2020")dsn("P1105") clear
+recast long id
 gen diagnose_date = date(DIADAT, "YMD")
 format diagnose_date %td
 generate cancer = 1
 save "data\temp\outcome_cancer.dta", replace
 
 // 1-year cancer survival
-odbc load, exec("select * from SoS_R_DORS_ENGANG")dsn("P1105") clear
+odbc load, exec("SELECT * FROM SoS_R_DORS_ENGANG")dsn("P1105") clear
 keep lopnr DODSDAT ULORSAK MORSAK*
+rename lopnr id
+recast long id
 tostring DODSDAT, replace
-gen death_date = date(DODSDAT, "YMD" )
-format death_date %td
+tempfile cod_2016_2019
+save `cod_2016_2019'
 
-tempfile dead_2016_2019
-save `dead_2016_2019'
-odbc load, exec("select * from SoS_R_DORS_KLEV4")dsn("P1105") clear
+odbc load, exec("select * from SoS_R_DORS_KLEV4 WHERE AR = 2020")dsn("P1105") clear
 keep lopnr DODSDAT ULORSAK MORSAK*
+rename lopnr id
+recast long id
+tempfile cod_2020
+save `cod_2020'
+
+odbc load, exec("select * from SoS_R_DORS_TOT_LEV5 WHERE AR >= 2021")dsn("P1105") clear
+keep P1105_LopNr_PersonNr DODSDAT ULORSAK MORSAK*
+rename P1105_LopNr_PersonNr id
+destring id, replace
+append using `cod_2016_2019'
+append using `cod_2020'
+
 gen death_date = date(DODSDAT, "YMD" )
 format death_date %td
-append using `dead_2016_2019'
-
-rename (lopnr) (id)
 
 // Reduce compexity of causes
 replace ULORSAK = substr(ULORSAK,1,3)

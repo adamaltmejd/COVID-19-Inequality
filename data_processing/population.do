@@ -1,4 +1,4 @@
-forvalues i=2015/2020 {
+forvalues i=2015/2021 {
 	odbc load, exec("select * from RTB`i'")dsn("P1105") clear
 	rename P1105_LopNr_PersonNr id
 	gen year=`i'+1
@@ -8,13 +8,13 @@ forvalues i=2015/2020 {
 	save `pop`i''
 }
 
-forvalues i=2015/2019 {
+forvalues i=2015/2020 {
 	append using `pop`i''
 }
 
 // Drop users with bad numbers
 preserve
-odbc load, exec("select * from Population_PersonNr_20211231")dsn("P1105") clear
+odbc load, exec("select * from Population_PersonNr_20221231")dsn("P1105") clear
 keep if FelPersonNr == 1 | AterAnv == 1
 rename P1105_LopNr_PersonNr id
 keep id FelPersonNr AterAnv LopNrByte

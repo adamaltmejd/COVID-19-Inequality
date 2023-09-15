@@ -1,46 +1,61 @@
 level,label,drop
 1.income_qt,Quartile 1,1
-1.income_qt#0.year_2020,~~\(\times 2016--2019\),1
-1.income_qt#1.year_2020,~~\(\times 2020\),1
+0.year_group#1.income_qt,~~\(\times 2016--2019\),1
+1.year_group#1.income_qt,~~\(\times 2020\),1
+2.year_group#1.income_qt,~~\(\times 2021\),1
 2.income_qt,Quartile 2,0
-2.income_qt#0.year_2020,~~\(\times 2016--2019\),1
-2.income_qt#1.year_2020,~~\(\times 2020\),0
+0.year_group#2.income_qt,~~\(\times 2016--2019\),1
+1.year_group#2.income_qt,~~\(\times 2020\),0
+2.year_group#2.income_qt,~~\(\times 2021\),0
 3.income_qt,Quartile 3,0
-3.income_qt#0.year_2020,~~\(\times 2016--2019\),1
-3.income_qt#1.year_2020,~~\(\times 2020\),0
+0.year_group#3.income_qt,~~\(\times 2016--2019\),1
+1.year_group#3.income_qt,~~\(\times 2020\),0
+2.year_group#3.income_qt,~~\(\times 2021\),0
 4.income_qt,Quartile 4,0
-4.income_qt#0.year_2020,~~\(\times 2016--2019\),1
-4.income_qt#1.year_2020,~~\(\times 2020\),0
+0.year_group#4.income_qt,~~\(\times 2016--2019\),1
+1.year_group#4.income_qt,~~\(\times 2020\),0
+2.year_group#4.income_qt,~~\(\times 2021\),0
 0.education,Missing education,1
-0.education#0.year_2020,~~\(\times 2016--2019\),1
-0.education#1.year_2020,~~\(\times 2020\),1
+0.year_group#0.education,~~\(\times 2016--2019\),1
+1.year_group#0.education,~~\(\times 2020\),1
+2.year_group#0.education,~~\(\times 2021\),1
 1.education,Compulsory,1
-1.education#0.year_2020,~~\(\times 2016--2019\),1
-1.education#1.year_2020,~~\(\times 2020\),1
+0.year_group#1.education,~~\(\times 2016--2019\),1
+1.year_group#1.education,~~\(\times 2020\),1
+2.year_group#1.education,~~\(\times 2021\),1
 2.education,Upper secondary,0
-2.education#0.year_2020,~~\(\times 2016--2019\),1
-2.education#1.year_2020,~~\(\times 2020\),0
+0.year_group#2.education,~~\(\times 2016--2019\),1
+1.year_group#2.education,~~\(\times 2020\),0
+2.year_group#2.education,~~\(\times 2021\),0
 3.education,Post-secondary school,0
-3.education#0.year_2020,~~\(\times 2016--2019\),1
-3.education#1.year_2020,~~\(\times 2020\),0
+0.year_group#3.education,~~\(\times 2016--2019\),1
+1.year_group#3.education,~~\(\times 2020\),0
+2.year_group#3.education,~~\(\times 2021\),0
 1.male,Men,1
-1.male#0.year_2020,~~\(\times 2016--2019\),1
-1.male#1.year_2020,~~\(\times 2020\),1
+0.year_group#1.male,~~\(\times 2016--2019\),1
+1.year_group#1.male,~~\(\times 2020\),1
+2.year_group#1.male,~~\(\times 2021\),1
 0.male,Women,0
-0.male#0.year_2020,~~\(\times 2016--2019\),1
-0.male#1.year_2020,~~\(\times 2020\),0
+0.year_group#0.male,~~\(\times 2016--2019\),1
+1.year_group#0.male,~~\(\times 2020\),0
+2.year_group#0.male,~~\(\times 2021\),0
 0.country,Missing country of birth,1
-0.country#0.year_2020,~~\(\times 2016--2019\),1
-0.country#1.year_2020,~~\(\times 2020\),1
+0.year_group#0.country,~~\(\times 2016--2019\),1
+1.year_group#0.country,~~\(\times 2020\),1
+2.year_group#0.country,~~\(\times 2021\),1
 1.country,Sweden,1
-1.country#0.year_2020,~~\(\times 2016--2019\),1
-1.country#1.year_2020,~~\(\times 2020\),1
+0.year_group#1.country,~~\(\times 2016--2019\),1
+1.year_group#1.country,~~\(\times 2020\),1
+2.year_group#1.country,~~\(\times 2021\),1
 2.country,Europe,0
-2.country#0.year_2020,~~\(\times 2016--2019\),1
-2.country#1.year_2020,~~\(\times 2020\),0
+0.year_group#2.country,~~\(\times 2016--2019\),1
+1.year_group#2.country,~~\(\times 2020\),0
+2.year_group#2.country,~~\(\times 2021\),0
 3.country,Outside of Europe,0
-3.country#0.year_2020,~~\(\times 2016--2019\),1
-3.country#1.year_2020,~~\(\times 2020\),0
-0.year_2020,\(2016--2019\),1
-1.year_2020,\(2020\),0
+0.year_group#3.country,~~\(\times 2016--2019\),1
+1.year_group#3.country,~~\(\times 2020\),0
+2.year_group#3.country,~~\(\times 2021\),0
+0.year_group,\(2016--2019\),1
+1.year_group,\(2020\),0
+2.year_group,\(2021\),0
 _cons,Constant,0

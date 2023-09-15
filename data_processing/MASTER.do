@@ -23,11 +23,11 @@ do "merge.do"
 //////////////
 
 use "data/data.dta", clear
-drop if year > 2020 // Use only 2020 data
+drop if year > 2021 // Analysis for 2020, 2021. To much data missing for 2022.
 
 // All outcome variables
 vl create all_outcomes = ( ///
-	covid_pos covid_hosp covid_dead covid_novacc ///
+	covid_pos covid_hosp covid_dead covid_vaccinated /// covid_novacc
 	dead_any_cause antidepressants sedatives psych_1177 psych_outp psych_hosp psych_death ///
 	surgery surg_dead_30d cancer cancer_dead_365d ///
 	dispinc_drop unemployed not_in_emp ///
@@ -35,7 +35,7 @@ vl create all_outcomes = ( ///
 )
 // A subset of which is included in regressions (to save time)
 vl create outcomes = ( ///
-	covid_pos covid_hosp covid_dead ///
+	covid_pos covid_hosp covid_dead covid_vaccinated ///
 	dead_any_cause psych_outp ///
 	surg_dead_30d cancer_dead_365d ///
 	dispinc_drop unemployed ///

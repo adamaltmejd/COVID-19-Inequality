@@ -1,5 +1,5 @@
 // REGION OF BIRTH
-odbc load, exec("select * from Fodelseuppg_20211231")dsn("P1105") clear
+odbc load, exec("select * from Fodelseuppg_20221231")dsn("P1105") clear
 
 // Fix encoding issues
 capture erase "bak.stunicode/countries_and_regions.dta"
@@ -87,7 +87,7 @@ tempfile region_of_birth
 save `region_of_birth'
 
 // Get basic info
-odbc load, exec("select * from Population_PersonNr_20211231")dsn("P1105") clear
+odbc load, exec("select * from Population_PersonNr_20221231")dsn("P1105") clear
 
 gen birth_year=substr(FodelseArMan,1,4)
 destring birth_year, replace

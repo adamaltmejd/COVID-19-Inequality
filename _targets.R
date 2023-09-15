@@ -16,14 +16,14 @@ list(
     # 9 main outcomes
     tar_target(main_outcomes, c("covid_pos", "covid_hosp", "covid_dead", "dead_any_cause", "psych_outp", "dispinc_drop", "unemployed", "cancer_dead_365d", "surg_dead_30d")),
     #tar_target(main_outcomes, c("antidepressants", "sedatives", "psych_1177", "psych_death", "psych_hosp", "psych_outp")),
-    # "surgery", "cancer", "not_in_emp", "covid_novacc",
+    # "surgery", "cancer", "not_in_emp", "covid_novacc", "covid_vaccinated"
     # "hosp_unemp", "hosp_inc"
 
     # Base levels
     tar_target(f_base_levels, file.path("data", "population_averages.csv"), format = "file"),
     tar_target(dt_base_levels,
-        fread(f_base_levels) |> DT(year <= 2020) |>
-            DT(CJ(year = 2016:2020, outcome = unique(outcome)), on = c("year", "outcome")) |>
+        fread(f_base_levels) |>
+            DT(CJ(year = 2016:2021, outcome = unique(outcome)), on = c("year", "outcome")) |>
             set_labels(out = _) |>
             DT(, year_int := as.integer(as.character(year)))
     ),
@@ -58,6 +58,10 @@ list(
             # Fake point to get unemployment away from limit
             geom_point(data = set_labels(data.table(outcome = "unemployed", year = 2020), return = TRUE)[, `:=`(year_int = 2020, year_2020 = TRUE, value = 0.07)], alpha = 0) +
             geom_point(data = set_labels(data.table(outcome = "psych_outp", year = 2020), return = TRUE)[, `:=`(year_int = 2020, year_2020 = TRUE, value = 0.033)], alpha = 0) +
+            geom_point(data = set_labels(data.table(outcome = "covid_hosp", year = 2020), return = TRUE)[, `:=`(year_int = 2020, year_2020 = TRUE, value = 0.00360)], alpha = 0) +
+            geom_point(data = set_labels(data.table(outcome = "covid_hosp", year = 2020), return = TRUE)[, `:=`(year_int = 2020, year_2020 = TRUE, value = 0.00455)], alpha = 0) +
+            geom_point(data = set_labels(data.table(outcome = "covid_dead", year = 2020), return = TRUE)[, `:=`(year_int = 2020, year_2020 = TRUE, value = 0.00060)], alpha = 0) +
+            geom_point(data = set_labels(data.table(outcome = "covid_dead", year = 2020), return = TRUE)[, `:=`(year_int = 2020, year_2020 = TRUE, value = 0.00150)], alpha = 0) +
             scale_y_continuous(
                 # Y axis limits should never be below zero
                 #limits = function(x) c(max(0, x[1], na.rm = TRUE), x[2]),
@@ -95,7 +99,7 @@ list(
             plot_theme() + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
     ),
     tar_target(out_p_base_levels_psych,
-               saveplot(p_base_levels_psych, file.path("out", "base_levels_psych.eps"), width = 14, height = 7), format = "file"),
+               saveplot(p_base_levels_psych, file.path("out", "base_levels_psych.pdf"), width = 14, height = 7), format = "file"),
 
     # Radar plots
     tar_target(f_margins_data, file.path("data", "margins_results.csv"), format = "file"),
@@ -109,81 +113,47 @@ list(
         names = est_type,
         tar_target(plotdata_radar, create_plotdata(margins_data, est_type, radar_order = TRUE)),
 
-        # Radar plots for 2020 (all groups in one radar plot)
-        tar_target(dt_radar, prepare_radar_data(plotdata_radar[dimension == dimensions$dimension & outcome %in% main_outcomes & year == "2020" & !(group %in% c("0.education", "0.country"))]),
+        tarchetypes::tar_map(
+            values = list(year_gr = c("2016-2019", "2020", "2021"), year_name = c("2016_2019", "2020", "2021")),
+            names = year_name,
+            tar_target(dt_radar, prepare_radar_data(plotdata_radar[dimension == dimensions$dimension & outcome %in% main_outcomes &
+                                                                   year == year_gr & !(group %in% c("0.education", "0.country"))], include_outcomes = main_outcomes),
                    pattern = map(dimensions), iteration = "list"),
-        tar_target(p_radar,
-                   plot_radar(dt_radar,
-                              fn = file.path("out", "all_groups", paste0("", dimensions$dimension, "_2020_", est_type, ".eps")),
-                              groups = groups[dimension == dimensions$dimension, group],
-                              #title = dimensions$dimension_label,
-                              draw_legend = TRUE),
-                   pattern = map(dimensions, dt_radar), format = "file"),
-
-        # Radar plots for 2016-2019 averages
-        tar_target(dt_radar_2016, prepare_radar_data(plotdata_radar[dimension == dimensions$dimension & outcome %in% main_outcomes & year == "2016-2019" & !(group %in% c("0.education", "0.country"))], include_outcomes = main_outcomes),
-                   pattern = map(dimensions), iteration = "list"),
-        tar_target(p_radar_2016,
-                   plot_radar(dt_radar_2016,
-                              fn = file.path("out", "all_groups", paste0("", dimensions$dimension, "_2016_2019_", est_type, ".eps")),
-                              groups = groups[dimension == dimensions$dimension, group],
-                              draw_legend = TRUE),
-                   pattern = map(dimensions, dt_radar_2016), format = "file")
+            tar_target(p_radar,
+                    plot_radar(dt_radar,
+                                fn = file.path("out", "radar_plots", paste0("", dimensions$dimension, "_", year_name, "_", est_type, ".eps")),
+                                groups = groups[dimension == dimensions$dimension, group],
+                                draw_legend = TRUE),
+                    pattern = map(dimensions, dt_radar), format = "file")
+        )
     ),
 
-    # # Plots of absolute levels
-    # tarchetypes::tar_map(
-    #     values = list(dimension_type = c("male", "income_qt", "education", "country")),
-    #     names = dimension_type,
-
-    #     tar_target(p_abslvls,
-    #             ggplot(plotdata_abs[dimension == dimension_type & group != "pop_avg" & outcome %in% main_outcomes], aes(x = group_label, y = coef)) +
-    #                     geom_point(aes(color = group_label), size = 2) +
-    #                     geom_line(data = plotdata_abs[dimension == dimension_type & group != "pop_avg" & outcome %in% main_outcomes & !(outcome %in% c("covid_pos", "covid_hosp", "covid_dead"))], aes(color = group_label), linewidth = 0.9, lineend = "butt", linejoin = "bevel", arrow = arrow(length = unit(0.1, "inches"), type = "open")) +
-    #                     geom_hline(data = plotdata_abs[dimension == dimension_type & outcome %in% main_outcomes & group == "pop_avg"], aes(yintercept = coef), color = "grey50", linetype = "dashed") +
-    #                     geom_segment(data = dcast(plotdata_abs[dimension == dimension_type & group == "pop_avg" & outcome %in% main_outcomes, -c("var", "ci_lower", "ci_upper")], as.formula("...~year"), value.var = "coef"),
-    #                                 aes(x = 0, y = `2016-2019`, xend = 0, yend = `2020`), linewidth = 0.9, color = "grey50", lineend = "butt", linejoin = "bevel", arrow = arrow(length = unit(0.1, "inches"), type = "open")) +
-    #                     facet_wrap(vars(outcome_label), scales = "free_y") +
-    #                     scale_y_continuous(labels = scales::percent) +
-    #                     scale_color_discrete(type = reds()[1:uniqueN(plotdata_abs[dimension == dimension_type]$group_label) - 1]) +
-    #                     coord_cartesian(clip = "off") +
-    #                     guides(color = "none", fill = "none") +
-    #                     labs(x = NULL, y = NULL, color = NULL) +
-    #                     plot_theme() +
-    #                     theme(axis.text.x = element_text(angle = 30, hjust = 1))),
-    #     tar_target(out_abslvls,
-    #                 saveplot(p_abslvls,
-    #                             paste0("out/absolute_levels/", dimension_type, ".pdf"),
-    #                             height = 18, width = 18), format = "file")
-    # ),
-
-    # Scatter plot of changes between 2016-2019 and 2020
+    ###
+    # Scatter plot of changes between 2016-2019 and 2020 (and 2020 vs 2021)
     tar_target(dt_scatter, plotdata |>
         DT(outcome %in% main_outcomes) |>
         {\(x) dcast(x[, .(outcome_label, group, group_label, dimension, dimension_label, year, coef)], outcome_label + group + group_label + dimension + dimension_label ~ year, value.var = "coef") }() |>
-        {\(x) setnames(x, c("2016-2019", "2020"), c("year_2016_2019", "year_2020")) }() |>
+        {\(x) setnames(x, c("2016-2019", "2020", "2021"), c("year_2016_2019", "year_2020", "year_2021")) }() |>
         DT(!is.na(year_2016_2019)) |>
         DT(!(group %in% c("0.education", "0.country"))) |>
         DT(, group_nr := gsub("[^0-9]+", "", group))),
 
-    # Scatter by group
+    # Scatter
     tar_target(scatter_groups, unique(dt_scatter[, .(dimension, dimension_label)]) |> DT(, dimension_label_title := paste(c("(a)", "(b)", "(c)", "(d)"), dimension_label))),
     tar_target(p_scatter_by_group,
         ggplot(data = dt_scatter[dimension == scatter_groups$dimension],
-               #aes(x = year_2016_2019, y = year_2020, color = group_label, shape = outcome_label)) +
                aes(x = year_2016_2019, y = year_2020)) +
             geom_ribbon(data = data.table(x = seq(0, 2.4, 0.1)),
                         aes(x = x, y = x, ymin = x * 0.95, ymax = x * 1.05), fill = "grey60", alpha = 0.5) +
             geom_ribbon(data = data.table(x = seq(0, 2.4, 0.1)),
                         aes(x = x, y = x, ymin = x * 0.90, ymax = x * 1.1), fill = "grey80", alpha = 0.5) +
             geom_abline(intercept = 0, slope = 1, color = "gray60", linewidth = 0.3) +
-            geom_point(aes(color = group_label), size = 1.35, alpha = 0.9) +
+            geom_point(aes(color = group_label), size = 1.2, alpha = 0.7) +
             scale_x_continuous(expand = expansion(0, 0), limits = c(0, 2.3), breaks = seq(0, 2, 0.5), oob = scales::squish) +
             scale_y_continuous(expand = expansion(0, 0), limits = c(0, 2.3), breaks = seq(0, 2, 0.5), oob = scales::squish) +
             coord_fixed() +
             labs(y = "2020", x = "2016-2019 average") +
             scale_color_discrete(type = reds()[1:uniqueN(dt_scatter[dimension == scatter_groups$dimension]$group_label)]) +
-            #scale_shape_manual(values = setNames(0:uniqueN(dt_scatter$outcome_label), unique(dt_scatter$outcome_label))) +
             plot_theme() +
             guides(shape = "none",
                    color = guide_legend(title = scatter_groups$dimension_label_title, title.position = "top",
@@ -193,27 +163,52 @@ list(
                   plot.margin = margin(5,0,3,0),
                   legend.margin = margin(2, 0, 0, 0),
                   legend.position = "bottom"),
-        pattern = map(scatter_groups), iteration = "list"
-    ),
-    # tar_target(out_scatter_by_group, saveplot(p_scatter_by_group, tolower(paste0("out/2020_vs_2016_2019/scatter_", scatter_groups$dimension, ".pdf")), width = 10, height = 11), pattern = map(p_scatter_by_group, scatter_groups), format = "file"),
-
-    # Create a grid of plots using cowplot and add a shared shape legend
-    tar_target(p_scatter_shape_legend, get_legend(ggplot(data = dt_scatter, aes(x = year_2016_2019, y = year_2020, color = group_label, shape = outcome_label)) + geom_point() +
-        scale_shape_manual(values = setNames(0:uniqueN(dt_scatter$outcome_label), unique(dt_scatter$outcome_label))) +
-        guides(color = "none", shape = guide_legend(title = NULL, nrow = 2)) + plot_theme() + theme(legend.position = "bottom"))),
+        pattern = map(scatter_groups), iteration = "list"),
     tar_target(out_scatter_by_group_joined,
-        save_plot("out/2020_vs_2016_2019/scatter_all.eps", device = cairo_ps,
+        save_plot("out/scatter/scatter_2016_2019_vs_2020.eps", device = cairo_ps,
                   plot_grid(plotlist = p_scatter_by_group, align = "hv", axis = "tblr", nrow = 2, ncol = 2),
-                #   plot_grid(plot_grid(plotlist = p_scatter_by_group, align = "hv", axis = "tblr", nrow = 2, ncol = 2),
-                #             p_scatter_shape_legend, ncol = 1, rel_heights = c(0.93, 0.07)),
+                  base_height = 3.5, base_asp = 0.8, ncol = 2, nrow = 2), format = "file"),
+
+    # 2020 vs 2021
+    tar_target(p_scatter_by_group_2021,
+        ggplot(data = dt_scatter[dimension == scatter_groups$dimension & !is.na(year_2021)] |> melt(measure.vars = c("year_2020", "year_2021")),
+               aes(x = year_2016_2019, y = value)) +
+            geom_ribbon(data = data.table(x = seq(0, 2.4, 0.1)),
+                        aes(x = x, y = x, ymin = x * 0.95, ymax = x * 1.05), fill = "grey60", alpha = 0.5) +
+            geom_ribbon(data = data.table(x = seq(0, 2.4, 0.1)),
+                        aes(x = x, y = x, ymin = x * 0.90, ymax = x * 1.1), fill = "grey80", alpha = 0.5) +
+            geom_abline(intercept = 0, slope = 1, color = "gray60", linewidth = 0.3) +
+            geom_point(aes(color = group_label, shape = variable), size = 1.2, alpha = 0.7) +
+            scale_x_continuous(expand = expansion(0, 0), limits = c(0, 2.3), breaks = seq(0, 2, 0.5), oob = scales::squish) +
+            scale_y_continuous(expand = expansion(0, 0), limits = c(0, 2.3), breaks = seq(0, 2, 0.5), oob = scales::squish) +
+            coord_fixed() +
+            labs(y = "2020, 2021", x = "2016-2019 average") +
+            scale_color_discrete(type = reds()[1:uniqueN(dt_scatter[dimension == scatter_groups$dimension]$group_label)]) +
+            scale_shape_manual(values = c(16, 3)) +
+            plot_theme() +
+            guides(shape = "none",
+                   color = guide_legend(title = scatter_groups$dimension_label_title, title.position = "top",
+                                        title.hjust = 0.5, ncol = 2, byrow = TRUE)) +
+            theme(legend.title.align = 0.5,
+                  legend.text = element_text(margin = margin(0,-2,0,-5)),
+                  plot.margin = margin(5,0,3,0),
+                  legend.margin = margin(2, 0, 0, 0),
+                  legend.position = "bottom"),
+        pattern = map(scatter_groups), iteration = "list"),
+    tar_target(p_scatter_shape_legend,
+        get_legend(
+            ggplot(data = dt_scatter[dimension == scatter_groups$dimension & !is.na(year_2021)] |> melt(measure.vars = c("year_2020", "year_2021")),
+                          aes(x = year_2016_2019, y = value, color = group_label, shape = variable)) + geom_point() +
+            scale_shape_manual(values = c(16, 3), breaks = c("year_2020", "year_2021"), labels = c("2020", "2021")) +
+            guides(color = "none", shape = guide_legend(title = NULL, nrow = 1)) + plot_theme() + theme(legend.position = "bottom")
+        )),
+    tar_target(out_scatter_by_group_joined_2021,
+        save_plot("out/scatter/scatter_2016_2019_vs_2020_2021.eps", device = cairo_ps,
+                  plot_grid(plot_grid(plotlist = p_scatter_by_group_2021, align = "hv", axis = "tblr", nrow = 2, ncol = 2), p_scatter_shape_legend, nrow = 2, ncol = 1, rel_heights = c(0.96, 0.04)),
                   base_height = 3.5, base_asp = 0.8, ncol = 2, nrow = 2), format = "file"),
 
     # Interaction effects
     tar_target(dt_interactions, plotdata[outcome %in% c("hosp_unemp", "hosp_inc")] |>
-        #DT(outcome == "cdead_hosp", `:=`(outcome_label = "Interaction", int1 = "covid_dead", int2 = "covid_hosp")) |>
-        #DT(outcome == "pos_unemp", `:=`(outcome_label = "Interaction", int1 = "covid_pos", int2 = "unemployed")) |>
-        #DT(outcome == "pos_inc", `:=`(outcome_label = "Interaction", int1 = "covid_pos", int2 = "dispinc_drop")) |>
-        #DT(outcome == "unemp_inc", `:=`(outcome_label = "Interaction", int1 = "unemployed", int2 = "dispinc_drop")) |>
         DT(outcome == "hosp_unemp", `:=`(outcome_label = "Interaction", int1 = "covid_hosp", int2 = "unemployed")) |>
         DT(outcome == "hosp_inc", `:=`(outcome_label = "Interaction", int1 = "covid_hosp", int2 = "dispinc_drop")) |>
         DT(!is.na(outcome_label))
@@ -238,7 +233,7 @@ list(
                 guides(color = "none", fill = "none") +
                 plot_theme() + theme(axis.text.y = element_text(size = 6), axis.text.x = element_text(size = 6, angle = 7, hjust = 0.5))
             )() |>
-            saveplot(file.path(paste0("out/interactions/", interactions, ".eps"))),
+            saveplot(file.path(paste0("out/interactions/", interactions, ".pdf"))),
             pattern = map(interactions), iteration = "list"),
 
     # Regression tables
@@ -281,7 +276,7 @@ list(
                 plot_theme() + theme(legend.position = "bottom")
             }()
     ),
-    tar_target(out_surgeries, saveplot(p_surgeries, "out/surgeries.eps"), format = "file"),
+    tar_target(out_surgeries, saveplot(p_surgeries, "out/surgeries.pdf"), format = "file"),
 
     tar_target(end, 1)
 )

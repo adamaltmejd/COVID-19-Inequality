@@ -1,4 +1,4 @@
-forvalues i=2015/2020 {
+forvalues i=2015/2021 {
 
 	if (inlist(`i', 2015, 2016, 2017, 2018)) {
 		local utb="Sun2000niva_old"
@@ -29,7 +29,7 @@ forvalues i=2015/2020 {
 	save `inut`i'', replace
 }
 
-forvalues i=2015/2019 {
+forvalues i=2015/2020 {
 	append using `inut`i''
 }
 	

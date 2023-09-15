@@ -199,12 +199,15 @@ regression_table <- function(regression_results, varlabels, outcome, digits = 3)
     dt <- regression_results[y == outcome]
 
     # Check if outcome is defined before 2020
-    if ("1.year_2020" %in% dt[, var]) {
+    if ("0.year_group" %in% dt[, var]) {
         # If variable exists but is null, drop all interaction rows
-        if (all(is.na(dt[var %in% c("0.year_2020", "1.year_2020"), tstat]))) {
-            dt <- dt[!grepl("1\\.year_2020", var)]
+        if (all(is.na(dt[var %in% c("0.year_group", "1.year_group", "2.year_group"), tstat]))) {
+            dt <- dt[!grepl("[012]\\.year_group", var)]
         }
     }
+
+    # Drop interactions with age
+    dt <- dt[!grepl("age_cat", var)]
 
     tab <- dt[, .(var, est = fmt_est(coef * 100, pval, digits = digits), se = fmt_se(stderr * 100, digits = digits), X_estimates_name)]
     tab <- dcast(melt(tab, measure.vars = c("est", "se")), var+variable~X_estimates_name, fill = "")
@@ -266,11 +269,11 @@ relative_effects_table <- function(.dt_rel, .dt_abs = NULL, include_pop_avg = FA
     tbl_dt[, est_type := NULL]
 
     group_labels <- unique(gsub("_[0-9-]+$", "", names(tbl_dt)[-1]))
-    column_labs <- setNames(c(1, rep(2, length(group_labels))), c(" ", group_labels))
+    column_labs <- setNames(c(1, rep(.dt[, uniqueN(year)], length(group_labels))), c(" ", group_labels))
 
     setnames(tbl_dt,
-             grep("_(2016-2019|2020)", names(tbl_dt)),
-             rep(c("{2016-2019}", "{2020}"), length(grep("_(2016-2019|2020)", names(tbl_dt)))/2))
+             grep("_(2016-2019|2020|2021)", names(tbl_dt)),
+             rep(c("{2016-2019}", "{2020}", "{2021}"), length(grep("_(2016-2019|2020|2021)", names(tbl_dt)))/3))
     setnames(tbl_dt, 1, "")
 
     linesep <- function(x, y = character()) {
@@ -287,7 +290,7 @@ relative_effects_table <- function(.dt_rel, .dt_abs = NULL, include_pop_avg = FA
             linesep = linesep(c(6, 4, 4)),
             escape = FALSE) |>
         add_header_above(column_labs) |>
-        add_S_align(S_fmt = "1.2", ncols = length(group_labels) * 2,
+        add_S_align(S_fmt = "1.2", ncols = length(group_labels) * 3,
                     text_before = "[", text_after = "]") |>
         add_tabularnewline()
 }

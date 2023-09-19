@@ -180,20 +180,20 @@ tempfile surg
 save `surg'
 
 // Outpatient care
-odbc load, exec("SELECT TOP 10000 * FROM SoS_TTTT_R_PAR_OV_ENGANG")dsn("P1105") clear
+odbc load, exec("SELECT * FROM SoS_TTTT_R_PAR_OV_ENGANG")dsn("P1105") clear
 keep kva_typ* AR lopnr INDATUMA
 rename lopnr id
 recast long id
 tostring INDATUMA, replace
 tempfile ov1
 save `ov1'
-odbc load, exec("SELECT TOP 10000 * FROM SoS_R_PAR_OV_KLEV4 WHERE AR = 2020")dsn("P1105") clear
+odbc load, exec("SELECT * FROM SoS_R_PAR_OV_KLEV4 WHERE AR = 2020")dsn("P1105") clear
 keep kva_typ* AR lopnr INDATUMA
 rename lopnr id
 recast long id
 tempfile ov2
 save `ov2'
-odbc load, exec("SELECT TOP 10000 * FROM SoS_R_PAR_OV_TOT_LEV5 WHERE AR >= 2021")dsn("P1105") clear
+odbc load, exec("SELECT * FROM SoS_R_PAR_OV_TOT_LEV5 WHERE AR >= 2021")dsn("P1105") clear
 keep kva_typ* AR P1105_LopNr_PersonNr INDATUMA
 rename P1105_LopNr_PersonNr id
 destring id, replace
